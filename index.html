@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Sarpras - SMAN 2 Ciamis</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- Choices.js (Premium Select UI) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Floating Admin Login Button -->
+        <button id="adminLoginBtn" class="floating-btn glass" title="Admin Login">
+            <i class="fas fa-lock"></i>
+        </button>
+        <button id="adminLogoutBtn" class="floating-btn glass hidden" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+
+        <header class="glass-header">
+            <div class="header-content">
+                <div class="logo-container">
+                    <img src="logo.png" alt="Logo SMAN 2 Ciamis" class="app-logo" onerror="this.outerHTML='<i class=\'fas fa-school logo-icon\'></i>';">
+                    <div>
+                        <!-- CMS Editable Text -->
+                        <h1 id="cms-header-title" class="cms-editable" data-cms-key="headerTitle">SMAN 2 CIAMIS</h1>
+                        <p id="cms-header-subtitle" class="cms-editable" data-cms-key="headerSubtitle">Sistem Informasi Penggunaan Sarana & Prasarana</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="action-bar">
+                <div class="search-box glass">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Cari acara atau fasilitas...">
+                </div>
+                
+                <!-- Admin Actions -->
+                <div id="adminActions" class="admin-actions hidden">
+                    <button class="btn btn-primary" id="addEventBtn"><i class="fas fa-plus"></i> Tambah Acara</button>
+                    <button class="btn btn-secondary" id="manageFacilitiesBtn"><i class="fas fa-tools"></i> Kelola Fasilitas</button>
+                    <button class="btn btn-secondary" id="mapEditorBtn"><i class="fas fa-map"></i> Pemetaan Denah</button>
+                </div>
+            </div>
+
+            <h2 id="cms-main-heading" class="cms-editable section-title" data-cms-key="mainHeading">Jadwal Penggunaan Mendatang</h2>
+            
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="loading-spinner hidden">
+                <div class="spinner"></div>
+                <p>Memuat data...</p>
+            </div>
+
+            <!-- Events Grid -->
+            <div id="eventsGrid" class="events-grid">
+                <!-- Event cards will be injected here by JS -->
+            </div>
+        </main>
+
+        <footer class="glass-footer">
+            <p id="cms-footer-text" class="cms-editable" data-cms-key="footerText">&copy; 2026 SMAN 2 Ciamis. All rights reserved.</p>
+        </footer>
+
+        <!-- Event Detail Slide-over Panel -->
+        <div id="detailPanel" class="slide-panel">
+            <div class="panel-header">
+                <h2>Detail Acara</h2>
+                <button class="close-btn" id="closeDetailBtn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="panel-content">
+                <div class="detail-card glass">
+                    <h3 id="detailTitle" class="detail-title"></h3>
+                    <p class="detail-meta"><i class="far fa-calendar-alt"></i> <span id="detailDate"></span></p>
+                    <p class="detail-meta"><i class="far fa-clock"></i> Pukul: <span id="detailTime"></span></p>
+                    <p class="detail-meta"><i class="fas fa-map-marker-alt"></i> <span id="detailFacility"></span></p>
+                    <p class="detail-meta"><i class="fas fa-envelope"></i> Nomor Surat: <span id="detailNomorSurat">-</span></p>
+                    
+                    <div class="detail-section">
+                        <h4>Penyelenggara</h4>
+                        <p id="detailOrganizer"></p>
+                        <p><i class="fas fa-phone-alt"></i> <span id="detailCP"></span></p>
+                    </div>
+                    
+                    <div class="detail-grid">
+                        <div class="stat-box">
+                            <i class="fas fa-users"></i>
+                            <div class="stat-value" id="detailParticipants"></div>
+                            <div class="stat-label">Peserta</div>
+                        </div>
+                        <div class="stat-box">
+                            <i class="fas fa-user-tie"></i>
+                            <div class="stat-value" id="detailCommittee"></div>
+                            <div class="stat-label">Panitia</div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4>Kebutuhan Teknis</h4>
+                        <ul id="detailTechnical" class="technical-list"></ul>
+                    </div>
+                </div>
+
+                <div class="map-container glass">
+                    <h4>Visualisasi Lokasi</h4>
+                    <div class="map-wrapper" id="mapWrapper">
+                        <img src="denah.png" alt="Denah Sekolah" id="schoolMap" onerror="this.onerror=null; this.src='https://placehold.co/800x600/eeeeee/999999?text=Denah+Belum+Diunggah';">
+                        <!-- Dynamic Highlights will be placed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="panelOverlay" class="panel-overlay"></div>
+
+        <!-- Add/Edit Event Modal -->
+        <div id="eventModal" class="modal hidden">
+            <div class="modal-content glass">
+                <div class="modal-header">
+                    <h3 id="eventModalTitle">Tambah Acara</h3>
+                    <button class="close-btn" id="closeEventModal"><i class="fas fa-times"></i></button>
+                </div>
+                <form id="eventForm">
+                    <input type="hidden" id="eventId">
+                    
+                    <div class="form-group">
+                        <label>Nama Acara</label>
+                        <input type="text" id="eventTitle" required class="form-control" placeholder="Contoh: Rapat Komite / Ekskul Voli">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nomor Surat</label>
+                        <input type="text" id="eventNomorSurat" class="form-control" placeholder="Contoh: 421.3/012/SMAN2/2026 (Opsional)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: normal;">
+                            <input type="checkbox" id="multiDayCheck"> Acara berlangsung lebih dari satu hari?
+                        </label>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label id="dateLabelMain">Tanggal</label>
+                            <input type="date" id="eventDate" required class="form-control">
+                        </div>
+                        <div class="form-group hidden" id="endDateGroup">
+                            <label>Sampai Tanggal</label>
+                            <input type="date" id="eventEndDate" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Waktu / Jam (Opsional)</label>
+                            <input type="text" id="eventTime" class="form-control" placeholder="Contoh: 08:00 atau Selasa 15.00, Rabu 12.15">
+                        </div>
+                        <div class="form-group">
+                            <label>Fasilitas (Bisa pilih lebih dari satu)</label>
+                            <select id="eventFacility" required class="form-control" multiple>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Penyelenggara</label>
+                            <input type="text" id="eventOrganizer" required class="form-control" placeholder="Contoh: OSIS / Guru / Luar">
+                        </div>
+                        <div class="form-group">
+                            <label>Contact Person</label>
+                            <input type="text" id="eventCP" class="form-control" placeholder="Contoh: Bpk. Adiw (0812345...)">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Jumlah Peserta</label>
+                            <input type="text" id="eventParticipants" class="form-control" placeholder="Contoh: 300 atau -">
+                        </div>
+                        <div class="form-group">
+                            <label>Jumlah Panitia</label>
+                            <input type="text" id="eventCommittee" class="form-control" placeholder="Contoh: 20 atau -">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kebutuhan Teknis (Format: Nama Barang - Jumlah, pisahkan dengan koma)</label>
+                        <textarea id="eventTechnical" rows="3" class="form-control" placeholder="Contoh: Kursi - 300, Sound System - 1, Proyektor - 2"></textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelEventBtn">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="saveEventBtn">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Manage Facilities Modal -->
+        <div id="facilitiesModal" class="modal hidden">
+            <div class="modal-content glass">
+                <div class="modal-header">
+                    <h3>Kelola Fasilitas</h3>
+                    <button class="close-btn" id="closeFacilitiesModal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="facilities-manager">
+                    <div class="add-facility-form">
+                        <input type="text" id="newFacilityName" placeholder="Nama fasilitas baru..." class="form-control">
+                        <button id="addFacilityBtn" class="btn btn-primary">Tambah</button>
+                    </div>
+                    <div class="import-facility-form" style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 15px; align-items: center;">
+                        <input type="file" id="csvFacilityInput" accept=".csv" class="form-control" style="padding: 5px; flex: 1;">
+                        <button id="importFacilityBtn" class="btn btn-secondary"><i class="fas fa-file-csv"></i> Import</button>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">*Format CSV: 1 kolom berisi daftar nama fasilitas. Pisahkan dengan koma atau baris baru.</p>
+                    <ul id="facilitiesList" class="admin-list">
+                        <!-- Populated dynamically -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal hidden">
+            <div class="modal-content glass login-box">
+                <div class="modal-header">
+                    <h3>Otorisasi Admin</h3>
+                    <button class="close-btn" id="closeLoginModal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="adminPassword" class="form-control" placeholder="Masukkan password admin">
+                    <p class="help-text">Hint: 12345 (untuk demo)</p>
+                </div>
+                <button id="loginSubmitBtn" class="btn btn-primary w-100">Masuk</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Map Viewer Modal -->
+    <div id="mapModal" class="modal hidden">
+        <div class="modal-content map-modal-content">
+            <span class="close-modal" id="closeMapModal">&times;</span>
+            <div class="map-wrapper" id="mapWrapper">
+                <img src="denah.png" alt="Denah Sekolah">
+                <!-- Sorotan (highlights) akan disuntikkan secara dinamis di sini -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Editor Modal (Khusus Admin) -->
+    <div id="mapEditorModal" class="modal hidden">
+        <div class="modal-content map-modal-content">
+            <span class="close-modal" id="closeMapEditorModal">&times;</span>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap;">
+                <h3 style="margin: 0; color: var(--color-primary);">🗺️ Editor Pemetaan Fasilitas</h3>
+                <select id="editorFacilitySelect" class="form-control" style="flex: 1; min-width: 200px;">
+                    <option value="">-- Pilih Fasilitas untuk Dipetakan --</option>
+                </select>
+                <button id="saveMapCoordsBtn" class="btn btn-primary">💾 Simpan Koordinat</button>
+                <button id="deleteMapCoordsBtn" class="btn btn-danger hidden" title="Hapus Koordinat Visual"><i class="fas fa-trash"></i> Hapus Kotak</button>
+            </div>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 1rem;">
+                <em>Cara Penggunaan: Pilih fasilitas, klik dan tarik (drag) kotak biru untuk menggeser letaknya, dan tarik ujung kanan bawahnya untuk mengubah ukuran kotak.</em>
+            </p>
+            <div class="map-wrapper" id="mapEditorWrapper" style="border: 2px dashed #ccc; user-select: none;">
+                <img src="denah.png" alt="Denah Sekolah" draggable="false">
+                <div id="editableHighlight" class="editable-highlight" style="display: none;">
+                    <div class="resize-handle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts: Menggunakan Firebase Compat agar bisa berjalan langsung tanpa server (file://) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
