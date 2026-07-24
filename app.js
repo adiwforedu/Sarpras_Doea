@@ -537,7 +537,7 @@ function setupEventListeners() {
     });
     DOM.loginSubmitBtn.addEventListener('click', () => {
         const pwd = DOM.adminPassword.value;
-        if (pwd === '12345') { 
+        if (pwd === 'Andalusia_2') { 
             toggleAdminMode(true);
             DOM.loginModal.classList.add('hidden');
             DOM.panelOverlay.classList.remove('active');
