@@ -403,7 +403,14 @@ function renderEvents(filterText = "") {
 
 function showEventDetail(event, dateStr) {
     document.getElementById('detailTitle').textContent = event.title;
-    document.getElementById('detailDate').textContent = dateStr;
+    const dateObj = new Date(event.date);
+    let pureDateStr = dateObj.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    if (event.endDate) {
+        const endObj = new Date(event.endDate);
+        const endStr = endObj.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        pureDateStr = `${pureDateStr} s.d. ${endStr}`;
+    }
+    document.getElementById('detailDate').textContent = pureDateStr;
     document.getElementById('detailTime').textContent = event.time || '-';
     document.getElementById('detailFacility').textContent = event.facility;
     document.getElementById('detailOrganizer').textContent = event.organizer;
