@@ -27,32 +27,38 @@ let mapCoordinates = {
     "gor": { top: "61%", left: "24%", width: "5.5%", height: "5.5%" },
     
     // Parkiran
-    "tempatparkirmotor": { top: "18.5%", left: "49%", width: "27%", height: "2.2%" },
     "parkiranbelakang": { top: "18.5%", left: "49%", width: "27%", height: "2.2%" },
-    "parkirbelakang": { top: "18.5%", left: "49%", width: "27%", height: "2.2%" },
     "parkirmobil": { top: "26%", left: "72.5%", width: "3.5%", height: "23%" },
-    "parkirmotor": { top: "59.5%", left: "51.5%", width: "20.5%", height: "4%" },
-    
-    // Blok Kelas X E
-    "xe1": { top: "71.5%", left: "39%", width: "4%", height: "4%" },
-    "xe2": { top: "71.5%", left: "34%", width: "4%", height: "4%" },
-    "xe3": { top: "71.5%", left: "29%", width: "5%", height: "4%" },
-    "xe4": { top: "71.5%", left: "23.5%", width: "5.5%", height: "4%" },
-    "xe5": { top: "66.5%", left: "23.5%", width: "5.5%", height: "4.5%" },
-    "xe6": { top: "66.5%", left: "19%", width: "4.5%", height: "4.5%" },
-    "xe7": { top: "71%", left: "19%", width: "4.5%", height: "9.5%" },
-    "xe8": { top: "76%", left: "23.5%", width: "5.5%", height: "4.5%" },
-    "xe9": { top: "76%", left: "29%", width: "5%", height: "4.5%" },
-    "xe10": { top: "76%", left: "34%", width: "4.5%", height: "4.5%" },
-    "xe11": { top: "69.5%", left: "56.5%", width: "5%", height: "4.5%" },
-    "xe12": { top: "69.5%", left: "61.5%", width: "5%", height: "4.5%" },
-    
-    // Blok Kelas Atas & Kanan (Sampel F)
-    "xif8": { top: "18%", left: "69.5%", width: "4%", height: "4%" },
-    "xif9": { top: "18%", left: "64%", width: "4.5%", height: "4%" },
-    "xif10": { top: "18%", left: "59%", width: "4.5%", height: "4%" },
-    "kelas": { top: "66%", left: "19%", width: "20%", height: "15%" } // Alias umum kelas kiri bawah
+    "parkirmotor": { top: "59.5%", left: "51.5%", width: "20.5%", height: "4%" }
 };
+
+const excludedFacilities = new Set([
+    "xe12", "xe11", "xe7", "xe6", "xe4", "xe8", "xe5", "xe9", "xe1", "xe2", "xe3", "xe10",
+    "kelas", "xif8", "xif9", "xif10", "parkirbelakang", "tempatparkirmotor"
+]);
+
+function sanitizeData() {
+    let changed = false;
+    
+    // Filter facilities list
+    if (typeof facilities !== 'undefined' && Array.isArray(facilities)) {
+        const filteredFacilities = facilities.filter(f => !excludedFacilities.has(normalizeFacilityName(f)));
+        if (filteredFacilities.length !== facilities.length) {
+            facilities = filteredFacilities;
+            changed = true;
+        }
+    }
+    
+    // Delete excluded coordinates
+    excludedFacilities.forEach(key => {
+        if (mapCoordinates && mapCoordinates.hasOwnProperty(key)) {
+            delete mapCoordinates[key];
+            changed = true;
+        }
+    });
+    
+    return changed;
+}
 
 // --- DOM Elements ---
 const DOM = {
@@ -142,6 +148,10 @@ async function loadFromFirebase() {
     db.collection("settings").doc("facilities").onSnapshot((doc) => {
         if (doc.exists) {
             facilities = doc.data().list || facilities;
+            const changed = sanitizeData();
+            if (changed) {
+                db.collection("settings").doc("facilities").set({ list: facilities });
+            }
             renderFacilities();
         } else {
             db.collection("settings").doc("facilities").set({ list: facilities });
@@ -152,6 +162,10 @@ async function loadFromFirebase() {
     db.collection("settings").doc("mapCoordinates").onSnapshot((doc) => {
         if (doc.exists) {
             mapCoordinates = { ...mapCoordinates, ...doc.data().coords };
+            const changed = sanitizeData();
+            if (changed) {
+                db.collection("settings").doc("mapCoordinates").set({ coords: mapCoordinates });
+            }
         } else {
             db.collection("settings").doc("mapCoordinates").set({ coords: mapCoordinates });
         }
@@ -180,6 +194,12 @@ function loadFromLocalStorage() {
     if (lsFacilities) facilities = JSON.parse(lsFacilities);
     if (lsCms) cmsContent = JSON.parse(lsCms);
     if (lsMap) mapCoordinates = { ...mapCoordinates, ...JSON.parse(lsMap).coords };
+    
+    const changed = sanitizeData();
+    if (changed) {
+        localStorage.setItem('sardas_facilities', JSON.stringify(facilities));
+        localStorage.setItem('sardas_mapCoordinates', JSON.stringify({ coords: mapCoordinates }));
+    }
     
     applyCmsContent();
     renderFacilities();
