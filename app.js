@@ -423,6 +423,16 @@ function showEventDetail(event, dateStr) {
         });
     }
 
+    const detailFormationContainer = document.getElementById('detailFormationContainer');
+    const detailFormationImg = document.getElementById('detailFormationImg');
+    if (event.formationImg) {
+        detailFormationImg.src = event.formationImg;
+        detailFormationContainer.classList.remove('hidden');
+    } else {
+        detailFormationImg.src = '';
+        detailFormationContainer.classList.add('hidden');
+    }
+
     const existingHighlights = document.querySelectorAll('.map-highlight');
     existingHighlights.forEach(el => el.remove());
 
@@ -560,6 +570,66 @@ function setupEventListeners() {
         DOM.eventModal.classList.add('hidden');
     });
 
+    const formationInput = document.getElementById('eventFormationInput');
+    if (formationInput) {
+        formationInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const rawResult = event.target.result;
+                // Langsung simpan hasil pembacaan asli ke form & tampilkan preview agar terjamin tersimpan saat tombol Simpan diklik
+                document.getElementById('eventFormationData').value = rawResult;
+                document.getElementById('formationPreviewImg').src = rawResult;
+                document.getElementById('formationPreviewContainer').classList.remove('hidden');
+
+                // Lakukan kompresi cerdas jika format dibagikan mendukung Image()
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 800; // Kompresi maksimal 800px
+                        if (width > maxDim || height > maxDim) {
+                            if (width > height) {
+                                height = Math.round((height * maxDim) / width);
+                                width = maxDim;
+                            } else {
+                                width = Math.round((width * maxDim) / height);
+                                height = maxDim;
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                            if (dataUrl && dataUrl.length < rawResult.length) {
+                                document.getElementById('eventFormationData').value = dataUrl;
+                                document.getElementById('formationPreviewImg').src = dataUrl;
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Kompresi kanvas diabaikan, menggunakan file gambar asli:', err);
+                    }
+                };
+                img.src = rawResult;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const removeFormationBtn = document.getElementById('removeFormationBtn');
+    if (removeFormationBtn) {
+        removeFormationBtn.addEventListener('click', function() {
+            if (document.getElementById('eventFormationInput')) document.getElementById('eventFormationInput').value = '';
+            if (document.getElementById('eventFormationData')) document.getElementById('eventFormationData').value = '';
+            if (document.getElementById('formationPreviewImg')) document.getElementById('formationPreviewImg').src = '';
+            if (document.getElementById('formationPreviewContainer')) document.getElementById('formationPreviewContainer').classList.add('hidden');
+        });
+    }
+
     DOM.eventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -578,6 +648,7 @@ function setupEventListeners() {
             participants: document.getElementById('eventParticipants').value,
             committee: document.getElementById('eventCommittee').value,
             technical: document.getElementById('eventTechnical').value,
+            formationImg: document.getElementById('eventFormationData').value || null
         };
 
         const id = document.getElementById('eventId').value;
@@ -675,6 +746,10 @@ function openEventModal(event = null) {
     document.getElementById('endDateGroup').classList.add('hidden');
     document.getElementById('dateLabelMain').textContent = 'Tanggal';
     document.getElementById('eventEndDate').required = false;
+    if (document.getElementById('eventFormationInput')) document.getElementById('eventFormationInput').value = '';
+    if (document.getElementById('eventFormationData')) document.getElementById('eventFormationData').value = '';
+    if (document.getElementById('formationPreviewImg')) document.getElementById('formationPreviewImg').src = '';
+    if (document.getElementById('formationPreviewContainer')) document.getElementById('formationPreviewContainer').classList.add('hidden');
 
     if (event) {
         document.getElementById('eventModalTitle').textContent = 'Edit Acara';
@@ -701,6 +776,11 @@ function openEventModal(event = null) {
         document.getElementById('eventParticipants').value = event.participants || '';
         document.getElementById('eventCommittee').value = event.committee || '';
         document.getElementById('eventTechnical').value = event.technical || '';
+        if (event.formationImg) {
+            document.getElementById('eventFormationData').value = event.formationImg;
+            document.getElementById('formationPreviewImg').src = event.formationImg;
+            document.getElementById('formationPreviewContainer').classList.remove('hidden');
+        }
     }
 
     DOM.eventModal.classList.remove('hidden');
