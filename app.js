@@ -22,21 +22,7 @@ let mapCoordinates = {
     "lapangupacara": { top: "28%", left: "51.2%", width: "20.5%", height: "20%" },
     "lapangtenis": { top: "34.5%", left: "37%", width: "12%", height: "21%" },
     "mesjid": { top: "23.5%", left: "29%", width: "11%", height: "9%" },
-    
-    // GOR & Sekitarnya
-    "gor": { top: "61%", left: "24%", width: "5.5%", height: "5.5%" },
-    
-    // Parkiran
-    "parkiranbelakang": { top: "18.5%", left: "49%", width: "27%", height: "2.2%" },
-    "parkirmobil": { top: "26%", left: "72.5%", width: "3.5%", height: "23%" },
-    "parkirmotor": { top: "59.5%", left: "51.5%", width: "20.5%", height: "4%" }
 };
-
-const excludedFacilities = new Set([
-    "xe12", "xe11", "xe7", "xe6", "xe4", "xe8", "xe5", "xe9", "xe1", "xe2", "xe3", "xe10",
-    "kelas", "xif8", "xif9", "xif10", "parkirbelakang", "tempatparkirmotor"
-]);
-
 function sanitizeData() {
     let changed = false;
     
