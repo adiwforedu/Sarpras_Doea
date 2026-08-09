@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Sarpras - SMAN 2 Ciamis</title>
+    <title>SISARNA - SMAN 2 Ciamis</title>
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,13 +26,12 @@
         <header class="glass-header">
             <div class="header-content">
                 <div class="logo-container">
-                    <img src="logo.png" alt="Logo SMAN 2 Ciamis" class="app-logo"
+                    <img src="logo.png" alt="Logo SISARNA" class="app-logo"
                         onerror="this.outerHTML='<i class=\'fas fa-school logo-icon\'></i>';">
                     <div>
                         <!-- CMS Editable Text -->
-                        <h1 id="cms-header-title" class="cms-editable" data-cms-key="headerTitle">SMAN 2 CIAMIS</h1>
-                        <p id="cms-header-subtitle" class="cms-editable" data-cms-key="headerSubtitle">Sistem Informasi
-                            Penggunaan Sarana & Prasarana</p>
+                        <h1 id="cms-header-title" class="cms-editable" data-cms-key="headerTitle">SISARNA</h1>
+                        <p id="cms-header-subtitle" class="cms-editable" data-cms-key="headerSubtitle">Sistem Informasi Sarana & Prasarana - SMAN 2 Ciamis</p>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -47,24 +46,12 @@
         </header>
 
         <main class="container">
-            <div class="action-bar">
-                <div class="search-box glass">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Cari acara atau fasilitas...">
-                </div>
-
-                <!-- Admin Actions -->
-                <div id="adminActions" class="admin-actions hidden">
-                    <button class="btn btn-primary" id="addEventBtn"><i class="fas fa-plus"></i> Tambah Acara</button>
-                    <button class="btn btn-secondary" id="manageFacilitiesBtn"><i class="fas fa-tools"></i> Kelola
-                        Fasilitas</button>
-                    <button class="btn btn-secondary" id="mapEditorBtn"><i class="fas fa-map"></i> Pemetaan
-                        Denah</button>
-                </div>
+            <!-- Navigasi Tab Utama -->
+            <div class="nav-tabs glass" style="display: flex; gap: 8px; margin-bottom: 1.5rem; padding: 6px; border-radius: 12px; background: rgba(255,255,255,0.6); flex-wrap: wrap;">
+                <button id="tabSarprasBtn" class="tab-btn active" style="flex: 1; min-width: 180px; padding: 10px 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; background: var(--color-primary); color: white;"><i class="fas fa-calendar-alt"></i> Jadwal Sarpras</button>
+                <button id="tabVehiclesBtn" class="tab-btn" style="flex: 1; min-width: 180px; padding: 10px 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; background: transparent; color: var(--color-text);"><i class="fas fa-car"></i> Perawatan Kendaraan</button>
+                <button id="tabComplaintsBtn" class="tab-btn" style="flex: 1; min-width: 180px; padding: 10px 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; background: transparent; color: var(--color-text);"><i class="fas fa-bullhorn"></i> Pengaduan Warga Sekolah</button>
             </div>
-
-            <h2 id="cms-main-heading" class="cms-editable section-title" data-cms-key="mainHeading">Jadwal Penggunaan
-                Mendatang</h2>
 
             <!-- Loading Indicator -->
             <div id="loadingIndicator" class="loading-spinner hidden">
@@ -72,10 +59,85 @@
                 <p>Memuat data...</p>
             </div>
 
-            <!-- Events Grid -->
-            <div id="eventsGrid" class="events-grid">
-                <!-- Event cards will be injected here by JS -->
-            </div>
+            <!-- Section 1: Sarana & Prasarana (Jadwal Acara) -->
+            <section id="sarprasSection">
+                <div class="action-bar">
+                    <div class="search-box glass">
+                        <i class="fas fa-search"></i>
+                        <input type="search" id="searchInput" name="search_query_sarpras" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Cari acara atau fasilitas...">
+                    </div>
+
+                    <!-- Admin Actions -->
+                    <div id="adminActions" class="admin-actions hidden">
+                        <button class="btn btn-primary" id="addEventBtn"><i class="fas fa-plus"></i> Tambah Acara</button>
+                        <button class="btn btn-secondary" id="manageFacilitiesBtn"><i class="fas fa-tools"></i> Kelola
+                            Fasilitas</button>
+                        <button class="btn btn-secondary" id="mapEditorBtn"><i class="fas fa-map"></i> Pemetaan
+                            Denah</button>
+                    </div>
+                </div>
+
+                <h2 id="cms-main-heading" class="cms-editable section-title" data-cms-key="mainHeading">Jadwal Penggunaan
+                    Mendatang</h2>
+
+                <!-- Events Grid -->
+                <div id="eventsGrid" class="events-grid">
+                    <!-- Event cards will be injected here by JS -->
+                </div>
+            </section>
+
+            <!-- Section 2: Modul Kendaraan Operasional -->
+            <section id="vehiclesSection" class="hidden">
+                <div class="action-bar">
+                    <div class="search-box glass">
+                        <i class="fas fa-search"></i>
+                        <input type="search" id="vehicleSearchInput" name="search_query_vehicle" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Cari nama kendaraan, plat nomor, atau jenis...">
+                    </div>
+
+                    <div id="adminVehicleActions" class="admin-actions hidden">
+                        <button class="btn btn-primary" id="addVehicleBtn"><i class="fas fa-plus"></i> Tambah Kendaraan</button>
+                    </div>
+                </div>
+
+                <!-- Alert Banner Peringatan Pajak & Ganti Oli -->
+                <div id="vehicleAlertBanner" class="alert-banner-box"></div>
+
+                <h2 class="section-title">Daftar Kendaraan Operasional Sekolah</h2>
+
+                <!-- Vehicles Grid -->
+                <div id="vehiclesGrid" class="events-grid">
+                    <!-- Vehicle cards will be injected here by JS -->
+                </div>
+            </section>
+
+            <!-- Section 3: Modul Pengaduan & Aspirasi Warga Sekolah -->
+            <section id="complaintsSection" class="hidden">
+                <div class="action-bar">
+                    <div class="search-box glass">
+                        <i class="fas fa-search"></i>
+                        <input type="search" id="complaintSearchInput" name="search_query_complaint" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Cari lokasi, deskripsi, atau pelapor...">
+                    </div>
+
+                    <div class="admin-actions">
+                        <button class="btn btn-primary" id="addComplaintBtn"><i class="fas fa-paper-plane"></i> Buat Laporan Pengaduan</button>
+                    </div>
+                </div>
+
+                <!-- Filter Pills -->
+                <div class="filter-pills">
+                    <button class="pill-btn active" data-filter="all">Semua Laporan</button>
+                    <button class="pill-btn" data-filter="Pending">⏳ Pending (Diterima)</button>
+                    <button class="pill-btn" data-filter="Dalam Perbaikan">🛠️ Dalam Perbaikan</button>
+                    <button class="pill-btn" data-filter="Selesai">✅ Selesai Dikerjakan</button>
+                </div>
+
+                <h2 class="section-title">Papan Pemantauan Pengaduan & Aspirasi Warga Sekolah</h2>
+
+                <!-- Complaints Grid -->
+                <div id="complaintsGrid" class="events-grid">
+                    <!-- Complaint cards will be injected here by JS -->
+                </div>
+            </section>
         </main>
 
         <footer class="glass-footer">
@@ -289,14 +351,16 @@
             <div class="modal-content glass login-box">
                 <div class="modal-header">
                     <h3>Otorisasi Admin</h3>
-                    <button class="close-btn" id="closeLoginModal"><i class="fas fa-times"></i></button>
+                    <button class="close-btn" id="closeLoginModal" type="button"><i class="fas fa-times"></i></button>
                 </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="adminPassword" class="form-control"
-                        placeholder="Masukkan password admin">
-                </div>
-                <button id="loginSubmitBtn" class="btn btn-primary w-100">Masuk</button>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="adminPassword" name="admin_password" autocomplete="current-password" class="form-control"
+                            placeholder="Masukkan password admin" required>
+                    </div>
+                    <button type="submit" id="loginSubmitBtn" class="btn btn-primary w-100">Masuk</button>
+                </form>
             </div>
         </div>
 
@@ -313,6 +377,184 @@
         </div>
     </div>
 
+    <!-- Add/Edit Vehicle Modal -->
+    <div id="vehicleModal" class="modal hidden">
+        <div class="modal-content glass" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 id="vehicleModalTitle">Tambah Kendaraan Operasional</h3>
+                <button class="close-btn" id="closeVehicleModal" type="button"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="vehicleForm">
+                <input type="hidden" id="vehicleId">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nama Kendaraan</label>
+                        <input type="text" id="vehicleName" required class="form-control" placeholder="Contoh: Avanza Dinas / Bus Sekolah / Motor Operasional">
+                    </div>
+                    <div class="form-group">
+                        <label>Plat Nomor</label>
+                        <input type="text" id="vehiclePlate" required class="form-control" placeholder="Contoh: Z 1234 XX">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Jenis Kendaraan</label>
+                        <select id="vehicleType" required class="form-control">
+                            <option value="Mobil">Mobil</option>
+                            <option value="Motor">Motor</option>
+                            <option value="Bus">Bus</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status Kondisi</label>
+                        <select id="vehicleStatus" required class="form-control">
+                            <option value="Siap Operasional">🟢 Siap Operasional</option>
+                            <option value="Perlu Perbaikan">🟡 Perlu Perbaikan</option>
+                            <option value="Dalam Servis">🔴 Dalam Servis / Bengkel</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Kilometer saat ini (KM)</label>
+                        <input type="number" id="vehicleKm" class="form-control" placeholder="Contoh: 45000">
+                    </div>
+                    <div class="form-group">
+                        <label>KM Target Ganti Oli Berikutnya</label>
+                        <input type="number" id="vehicleKmNextOil" class="form-control" placeholder="Contoh: 50000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tgl Terakhir Ganti Oli</label>
+                        <input type="date" id="vehicleLastOilDate" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Tgl Target Ganti Oli Berikutnya</label>
+                        <input type="date" id="vehicleNextOilDate" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Jatuh Tempo Pajak STNK (Tahunan)</label>
+                        <input type="date" id="vehicleTaxDate" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Jatuh Tempo Plat (5 Tahunan)</label>
+                        <input type="date" id="vehiclePlateDate" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Catatan Perawatan / Kelengkapan (Opsional)</label>
+                    <textarea id="vehicleNotes" rows="2" class="form-control" placeholder="Catatan kondisi kendaraan, kelengkapan surat, dll..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelVehicleBtn">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="saveVehicleBtn">Simpan Kendaraan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Complaint Modal (Public Warga Sekolah) -->
+    <div id="complaintModal" class="modal hidden">
+        <div class="modal-content glass" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>📢 Buat Laporan Pengaduan / Aspirasi Sarpras</h3>
+                <button class="close-btn" id="closeComplaintModal" type="button"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="complaintForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nama Pelapor</label>
+                        <input type="text" id="complaintReporter" required class="form-control" placeholder="Contoh: Budi Santoso / Inisial">
+                    </div>
+                    <div class="form-group">
+                        <label>Status / Peran</label>
+                        <select id="complaintRole" required class="form-control">
+                            <option value="Siswa">Siswa</option>
+                            <option value="Guru">Guru</option>
+                            <option value="Staf Sekolah">Staf Sekolah</option>
+                            <option value="Warga Sekolah">Warga Sekolah / Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Lokasi Fasilitas</label>
+                        <input type="text" id="complaintLocation" required class="form-control" placeholder="Contoh: Ruang X E 1 / Toilet Guru / Lapang Upacara">
+                    </div>
+                    <div class="form-group">
+                        <label>Kategori Masalah</label>
+                        <select id="complaintCategory" required class="form-control">
+                            <option value="Kekurangan Meja/Kursi">🪑 Kekurangan Meja / Kursi</option>
+                            <option value="Keran/Air Bocor">🚰 Keran Air Bocor / Mati</option>
+                            <option value="Listrik & Lampu">💡 Listrik & Lampu Mati</option>
+                            <option value="AC & Kipas">❄️ AC / Kipas Rusak</option>
+                            <option value="Fasilitas & Bangunan">🏫 Fasilitas / Bangunan Rusak</option>
+                            <option value="Lainnya">📌 Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-group">
+                        <label>No. WhatsApp / Kontak (Opsional)</label>
+                        <input type="text" id="complaintContact" class="form-control" placeholder="Contoh: 081234567890 (Untuk info perbaikan)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Rincian Deskripsi Pengaduan / Kebutuhan</label>
+                    <textarea id="complaintDesc" rows="3" required class="form-control" placeholder="Jelaskan secara detail kekurangan atau kerusakan yang ditemukan..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelComplaintBtn">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="saveComplaintBtn"><i class="fas fa-paper-plane"></i> Kirim Laporan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Response Modal for Complaints -->
+    <div id="complaintAdminModal" class="modal hidden">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>🛠️ Tindak Lanjut Pengaduan (Admin)</h3>
+                <button class="close-btn" id="closeComplaintAdminModal" type="button"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="complaintAdminForm">
+                <input type="hidden" id="complaintAdminId">
+                <div class="form-group">
+                    <label>Status Penanganan</label>
+                    <select id="complaintAdminStatus" class="form-control">
+                        <option value="Pending">⏳ Pending (Diterima)</option>
+                        <option value="Dalam Perbaikan">🛠️ Dalam Perbaikan</option>
+                        <option value="Selesai">✅ Selesai Dikerjakan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tanggapan / Catatan Admin Sarpras</label>
+                    <textarea id="complaintAdminResponse" rows="3" class="form-control" placeholder="Tuliskan catatan tindak lanjut, progres, atau solusi perbaikan..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelComplaintAdminBtn">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="saveComplaintAdminBtn">Simpan Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Map Editor Modal (Khusus Admin) -->
     <div id="mapEditorModal" class="modal hidden">
         <div class="modal-content map-modal-content">
@@ -323,9 +565,19 @@
                     <option value="">-- Pilih Fasilitas untuk Dipetakan --</option>
                 </select>
                 <button id="saveMapCoordsBtn" class="btn btn-primary">💾 Simpan Koordinat</button>
-                <button id="deleteMapCoordsBtn" class="btn btn-danger hidden" title="Hapus Koordinat Visual"><i
+                <button id="deleteMapCoordsBtn" class="btn btn-danger hidden" title="Hapus Kotak Terpilih"><i
                         class="fas fa-trash"></i> Hapus Kotak</button>
+                <button id="cleanOrphanCoordsBtn" class="btn btn-secondary" title="Bersihkan semua kotak koordinat lama yang fasilitasnya sudah tidak ada"><i
+                        class="fas fa-broom"></i> Bersihkan Kotak Lama</button>
             </div>
+            
+            <!-- Quick Add Facility Inline Form -->
+            <div style="display: flex; gap: 8px; margin-bottom: 1rem; align-items: center; background: rgba(255,255,255,0.7); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                <span style="font-size: 0.85rem; font-weight: 600; color: var(--color-text); white-space: nowrap;"><i class="fas fa-plus-circle"></i> Fasilitas Belum Ada?</span>
+                <input type="text" id="quickAddFacilityInput" class="form-control" placeholder="Ketik nama fasilitas baru..." style="flex: 1; padding: 6px 12px; font-size: 0.85rem;">
+                <button id="quickAddFacilityBtn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;"><i class="fas fa-plus"></i> Tambah</button>
+            </div>
+
             <p style="font-size: 0.85rem; color: #666; margin-bottom: 1rem;">
                 <em>Cara Penggunaan: Pilih fasilitas, klik dan tarik (drag) kotak biru untuk menggeser letaknya, dan
                     tarik ujung kanan bawahnya untuk mengubah ukuran kotak.</em>

@@ -631,10 +631,48 @@ body.admin-mode .event-card:hover .card-actions {
     justify-content: space-between;
     align-items: center;
     padding: 0.8rem;
-    background: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.7);
     border: 1px solid var(--glass-border);
     border-radius: 8px;
     margin-bottom: 0.5rem;
+    gap: 0.5rem;
+}
+.fac-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    overflow: hidden;
+}
+.fac-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fac-badge {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.fac-badge.mapped {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+.fac-badge.unmapped {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+.fac-actions {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
 }
 
 /* Footer */
@@ -646,6 +684,226 @@ body.admin-mode .event-card:hover .card-actions {
     margin-top: auto;
 }
 
+/* Modul Kendaraan Operasional & Tab Navigasi */
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+.tab-btn.active {
+    background: var(--color-primary) !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+}
+
+.vehicle-card {
+    position: relative;
+    padding: 1.5rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.vehicle-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+.vehicle-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.vehicle-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: rgba(30, 58, 138, 0.1);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+.vehicle-title-box {
+    flex: 1;
+}
+.vehicle-name {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin-bottom: 2px;
+}
+.vehicle-plate {
+    display: inline-block;
+    background: #000;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+.vehicle-status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.vehicle-status-ready { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.vehicle-status-warning { background: #fef9c3; color: #a16207; border: 1px solid #fef08a; }
+.vehicle-status-danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.vehicle-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    background: rgba(255,255,255,0.6);
+    padding: 0.8rem;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.04);
+}
+.vehicle-meta-item {
+    font-size: 0.82rem;
+}
+.vehicle-meta-label {
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    margin-bottom: 2px;
+}
+.vehicle-meta-value {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.alert-banner-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+}
+.alert-banner-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.alert-banner-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+.alert-banner-warning {
+    background: #fffbe6;
+    color: #856404;
+    border: 1px solid #ffeba8;
+}
+
+/* Modul Pengaduan & Aspirasi Warga Sekolah */
+.complaint-card {
+    position: relative;
+    padding: 1.5rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid var(--glass-border);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+.complaint-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+.complaint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.complaint-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.badge-pending { background: #fef9c3; color: #856404; border: 1px solid #ffeba8; }
+.badge-in-progress { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+.badge-completed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+
+.complaint-location {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+.complaint-category {
+    display: inline-block;
+    background: rgba(0,0,0,0.05);
+    color: var(--color-text);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.complaint-reporter {
+    font-size: 0.83rem;
+    color: var(--color-text-muted);
+}
+.complaint-desc {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    background: rgba(255,255,255,0.6);
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.04);
+}
+.complaint-admin-response {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-size: 0.88rem;
+}
+
+.filter-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+.pill-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--color-text);
+}
+.pill-btn.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
 @media (max-width: 768px) {
     .action-bar { flex-direction: column; }
     .search-box { max-width: 100%; }
@@ -655,4 +913,5 @@ body.admin-mode .event-card:hover .card-actions {
     .logo-container h1 { font-size: 1.2rem; }
     .logo-container p { font-size: 0.75rem; }
     .header-btn { width: 38px; height: 38px; font-size: 1rem; }
+    .vehicle-meta-grid { grid-template-columns: 1fr; }
 }
