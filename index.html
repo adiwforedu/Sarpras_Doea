@@ -468,10 +468,11 @@
     <div id="complaintModal" class="modal hidden">
         <div class="modal-content glass" style="max-width: 600px;">
             <div class="modal-header">
-                <h3>📢 Buat Laporan Pengaduan / Aspirasi Sarpras</h3>
+                <h3 id="complaintModalTitle">📢 Buat Laporan Pengaduan / Aspirasi Sarpras</h3>
                 <button class="close-btn" id="closeComplaintModal" type="button"><i class="fas fa-times"></i></button>
             </div>
             <form id="complaintForm">
+                <input type="hidden" id="complaintFormId">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nama Pelapor</label>
@@ -516,6 +517,12 @@
                 <div class="form-group">
                     <label>Rincian Deskripsi Pengaduan / Kebutuhan</label>
                     <textarea id="complaintDesc" rows="3" required class="form-control" placeholder="Jelaskan secara detail kekurangan atau kerusakan yang ditemukan..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Password Verifikasi Warga Sekolah / Admin</label>
+                    <input type="password" id="complaintPassword" required class="form-control" placeholder="Masukkan password verifikasi" autocomplete="off">
+                    <small style="color: var(--color-primary); font-size: 0.8rem; display: block; margin-top: 4px;"><i class="fas fa-info-circle"></i> Masukkan password verifikasi warga sekolah untuk memverifikasi laporan.</small>
                 </div>
 
                 <div class="modal-actions">

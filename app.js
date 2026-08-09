@@ -782,6 +782,14 @@ function renderComplaints(filterText = "", statusFilter = currentComplaintStatus
 
             <div class="complaint-desc">${c.desc}</div>
 
+            ${(c.status || 'Pending') === 'Pending' ? `
+                <div style="margin-top: 10px; text-align: right;">
+                    <button class="btn btn-secondary edit-public-complaint-btn" data-id="${c.id}" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 6px;" title="Edit rincian laporan sebelum diproses admin">
+                        <i class="fas fa-pen"></i> Edit Laporan Saya
+                    </button>
+                </div>
+            ` : ''}
+
             ${c.response ? `
                 <div class="complaint-admin-response">
                     <strong>💬 Tanggapan Admin Sarpras:</strong><br>
@@ -796,6 +804,14 @@ function renderComplaints(filterText = "", statusFilter = currentComplaintStatus
         `;
 
         DOM.complaintsGrid.appendChild(card);
+    });
+
+    DOM.complaintsGrid.querySelectorAll('.edit-public-complaint-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.getAttribute('data-id');
+            const comp = complaints.find(c => c.id === id);
+            openPublicComplaintEdit(comp);
+        });
     });
 
     DOM.complaintsGrid.querySelectorAll('.edit-complaint-btn').forEach(btn => {
@@ -814,6 +830,20 @@ function renderComplaints(filterText = "", statusFilter = currentComplaintStatus
             }
         });
     });
+}
+
+function openPublicComplaintEdit(comp) {
+    if (!comp) return;
+    DOM.complaintForm.reset();
+    document.getElementById('complaintFormId').value = comp.id;
+    document.getElementById('complaintModalTitle').textContent = '✏️ Edit Laporan Pengaduan Saya';
+    document.getElementById('complaintReporter').value = comp.reporter || '';
+    document.getElementById('complaintRole').value = comp.role || 'Siswa';
+    document.getElementById('complaintContact').value = comp.contact || '';
+    document.getElementById('complaintLocation').value = comp.location || '';
+    document.getElementById('complaintCategory').value = comp.category || 'Lainnya';
+    document.getElementById('complaintDesc').value = comp.desc || '';
+    DOM.complaintModal.classList.remove('hidden');
 }
 
 function openComplaintAdminModal(comp) {
@@ -916,6 +946,7 @@ function toggleAdminMode(state) {
         if (DOM.adminVehicleActions) DOM.adminVehicleActions.classList.add('hidden');
         disableCmsEditing();
     }
+    renderApp();
 }
 
 function enableCmsEditing() {
@@ -1007,6 +1038,10 @@ function setupEventListeners() {
     if (DOM.addComplaintBtn) {
         DOM.addComplaintBtn.addEventListener('click', () => {
             DOM.complaintForm.reset();
+            const formIdInput = document.getElementById('complaintFormId');
+            if (formIdInput) formIdInput.value = '';
+            const titleEl = document.getElementById('complaintModalTitle');
+            if (titleEl) titleEl.textContent = '📢 Buat Laporan Pengaduan / Aspirasi Sarpras';
             DOM.complaintModal.classList.remove('hidden');
         });
     }
@@ -1024,6 +1059,14 @@ function setupEventListeners() {
     if (DOM.complaintForm) {
         DOM.complaintForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            const pwdInput = document.getElementById('complaintPassword');
+            const pwd = pwdInput ? pwdInput.value.trim() : '';
+            if (pwd !== 'smandacis' && pwd !== 'Andalusia_2') {
+                alert("Password verifikasi salah! Silakan masukkan password verifikasi warga sekolah yang berlaku.");
+                return;
+            }
+
             const compData = {
                 reporter: document.getElementById('complaintReporter').value,
                 role: document.getElementById('complaintRole').value,
@@ -1036,17 +1079,34 @@ function setupEventListeners() {
                 response: ''
             };
 
+            const editId = document.getElementById('complaintFormId') ? document.getElementById('complaintFormId').value : '';
+
             const btn = document.getElementById('saveComplaintBtn');
             btn.disabled = true;
-            btn.textContent = 'Mengirim...';
+            btn.textContent = 'Menyimpan...';
 
             try {
-                await saveToDatabase('complaints', null, compData, false);
+                if (editId) {
+                    const updatedData = {
+                        reporter: compData.reporter,
+                        role: compData.role,
+                        contact: compData.contact,
+                        location: compData.location,
+                        category: compData.category,
+                        desc: compData.desc
+                    };
+                    await saveToDatabase('complaints', editId, updatedData, true);
+                    alert("Laporan pengaduan Anda berhasil diperbarui!");
+                } else {
+                    await saveToDatabase('complaints', null, compData, false);
+                    alert("Laporan pengaduan Anda berhasil dikirim! Tim Sarpras akan segera memverifikasi dan menindaklanjuti laporan Anda.");
+                }
+                DOM.complaintForm.reset();
+                if (document.getElementById('complaintFormId')) document.getElementById('complaintFormId').value = '';
                 DOM.complaintModal.classList.add('hidden');
-                alert("Laporan pengaduan Anda berhasil dikirim! Tim Sarpras akan segera memverifikasi laporan Anda.");
             } catch (err) {
                 console.error(err);
-                alert("Gagal mengirim laporan pengaduan.");
+                alert("Gagal menyimpan laporan pengaduan.");
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Kirim Laporan';
@@ -1197,14 +1257,22 @@ function setupEventListeners() {
     const loginForm = document.getElementById('loginForm');
     const handleLoginSubmit = (e) => {
         if (e) e.preventDefault();
-        const pwd = DOM.adminPassword.value;
+        const pwd = DOM.adminPassword ? DOM.adminPassword.value.trim() : '';
         if (pwd === 'Andalusia_2') { 
             toggleAdminMode(true);
             DOM.loginModal.classList.add('hidden');
             DOM.panelOverlay.classList.remove('active');
             DOM.adminPassword.value = '';
+            alert("Login Berhasil! Anda sekarang masuk sebagai Super Admin Sarpras.");
+        } else if (pwd === 'smandacis') {
+            DOM.loginModal.classList.add('hidden');
+            DOM.panelOverlay.classList.remove('active');
+            DOM.adminPassword.value = '';
+            alert("Login Berhasil sebagai Warga Sekolah! Anda dapat membuat laporan pengaduan & aspirasi sarpras.");
+            if (DOM.tabComplaintsBtn) DOM.tabComplaintsBtn.click();
+            if (DOM.complaintModal) DOM.complaintModal.classList.remove('hidden');
         } else {
-            alert('Password salah!');
+            alert("Password otorisasi salah! Silakan periksa kembali password yang Anda masukkan.");
         }
     };
 
