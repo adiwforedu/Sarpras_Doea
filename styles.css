@@ -700,14 +700,18 @@ body.admin-mode .card-actions {
 .glass-footer {
     text-align: center;
     padding: 1.2rem 1rem;
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid var(--glass-border);
+    border-top: 1px solid rgba(30, 58, 138, 0.15);
+    box-shadow: 0 -4px 20px rgba(30, 58, 138, 0.08);
     margin-top: auto;
     width: 100%;
     position: relative;
     z-index: 5;
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
 /* Modul Kendaraan Operasional & Tab Navigasi */
