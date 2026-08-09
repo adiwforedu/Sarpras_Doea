@@ -341,7 +341,7 @@ function renderFacilities() {
     }
     DOM.eventFacility.innerHTML = '';
     
-    const sortedFacilities = [...facilities].sort((a, b) => a.localeCompare(b, 'id'));
+    const sortedFacilities = [...facilities].sort((a, b) => a.localeCompare(b, 'id', { numeric: true, sensitivity: 'base' }));
     
     sortedFacilities.forEach(f => {
         const opt = document.createElement('option');
@@ -377,7 +377,10 @@ function renderFacilityAdminList(filterText = "") {
     
     let hasExactMatch = false;
 
-    facilities.forEach((f, idx) => {
+    const facilityObjects = facilities.map((f, idx) => ({ f, idx }));
+    facilityObjects.sort((a, b) => a.f.localeCompare(b.f, 'id', { numeric: true, sensitivity: 'base' }));
+
+    facilityObjects.forEach(({ f, idx }) => {
         const normalizedF = normalizeFacilityName(f);
         if (f.toLowerCase().includes(lowerFilter) || normalizedF.includes(normalizedFilter)) {
             if (normalizedF === normalizedFilter) hasExactMatch = true;
@@ -1574,7 +1577,7 @@ function openMapEditorForFacility(facName = "") {
 function populateMapEditorFacilitySelect(selectedFacName = "") {
     DOM.editorFacilitySelect.innerHTML = '<option value="">-- Pilih Fasilitas untuk Dipetakan --</option>';
     
-    const sorted = [...facilities].sort((a,b) => a.localeCompare(b, 'id'));
+    const sorted = [...facilities].sort((a, b) => a.localeCompare(b, 'id', { numeric: true, sensitivity: 'base' }));
     const validKeys = new Set();
     
     sorted.forEach(fac => {
