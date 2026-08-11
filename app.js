@@ -20,7 +20,43 @@ let cmsContent = {
 };
 
 // --- Koordinat Peta Denah ---
+const LOCAL_STORAGE_KEYS = {
+    facilities: 'sardas_facilities',
+    mapCoordinates: 'sardas_mapCoordinates'
+};
+
 let mapCoordinates = {};
+let isFirestoreAvailable = false;
+
+function loadFacilitiesFromLocalStorage() {
+    const ls = localStorage.getItem(LOCAL_STORAGE_KEYS.facilities);
+    if (ls) {
+        try {
+            const parsed = JSON.parse(ls);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed;
+            }
+        } catch (err) {
+            console.warn('Gagal mengurai localStorage fasilitas:', err);
+        }
+    }
+    return null;
+}
+
+function loadMapCoordinatesFromLocalStorage() {
+    const ls = localStorage.getItem(LOCAL_STORAGE_KEYS.mapCoordinates);
+    if (ls) {
+        try {
+            const parsed = JSON.parse(ls);
+            if (parsed && typeof parsed === 'object' && parsed.coords && typeof parsed.coords === 'object') {
+                return parsed.coords;
+            }
+        } catch (err) {
+            console.warn('Gagal mengurai localStorage koordinat denah:', err);
+        }
+    }
+    return null;
+}
 
 // --- DOM Elements ---
 const DOM = {
@@ -109,7 +145,9 @@ async function init() {
         loadFromLocalStorage();
     } else {
         try {
-            firebase.initializeApp(firebaseConfig);
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
             db = firebase.firestore();
             
             db.enablePersistence({ synchronizeTabs: true }).catch(err => {
@@ -117,6 +155,8 @@ async function init() {
             });
 
             await loadFromFirebase();
+            useLocalStorageFallback = false;
+            isFirestoreAvailable = true;
         } catch (error) {
             console.error("Gagal inisialisasi Firebase:", error);
             alert("Gagal terhubung ke Firebase. Menggunakan mode offline sementara.");
@@ -154,19 +194,55 @@ async function loadFromFirebase() {
 
     // Listen to Facilities
     db.collection("settings").doc("facilities").onSnapshot((doc) => {
-        if (doc.exists && doc.data().list) {
-            facilities = doc.data().list;
+        if (doc.exists) {
+            const data = doc.data() || {};
+            if (Array.isArray(data.list)) {
+                facilities = data.list;
+                localStorage.setItem(LOCAL_STORAGE_KEYS.facilities, JSON.stringify(facilities));
+            } else if (data.list === undefined) {
+                const storedFacilities = loadFacilitiesFromLocalStorage();
+                if (storedFacilities) {
+                    facilities = storedFacilities;
+                    db.collection("settings").doc("facilities").set({ list: facilities }, { merge: true });
+                } else {
+                    db.collection("settings").doc("facilities").set({ list: facilities }, { merge: true });
+                }
+            }
             renderFacilities();
         } else {
+            const storedFacilities = loadFacilitiesFromLocalStorage();
+            if (storedFacilities) {
+                facilities = storedFacilities;
+            }
             db.collection("settings").doc("facilities").set({ list: facilities });
+            renderFacilities();
         }
     }, err => console.error("Gagal memuat Fasilitas dari Firestore:", err));
 
     // Listen to Map Coordinates
     db.collection("settings").doc("mapCoordinates").onSnapshot((doc) => {
-        if (doc.exists && doc.data().coords) {
-            mapCoordinates = doc.data().coords;
+        if (doc.exists) {
+            const data = doc.data() || {};
+            if (data.coords && typeof data.coords === 'object') {
+                mapCoordinates = data.coords;
+                localStorage.setItem(LOCAL_STORAGE_KEYS.mapCoordinates, JSON.stringify({ coords: mapCoordinates }));
+                renderFacilities();
+            } else if (data.coords === undefined) {
+                const storedCoords = loadMapCoordinatesFromLocalStorage();
+                if (storedCoords) {
+                    mapCoordinates = storedCoords;
+                    db.collection("settings").doc("mapCoordinates").set({ coords: mapCoordinates }, { merge: true });
+                    renderFacilities();
+                } else {
+                    db.collection("settings").doc("mapCoordinates").set({ coords: mapCoordinates }, { merge: true });
+                }
+            }
         } else {
+            const storedCoords = loadMapCoordinatesFromLocalStorage();
+            if (storedCoords) {
+                mapCoordinates = storedCoords;
+                renderFacilities();
+            }
             db.collection("settings").doc("mapCoordinates").set({ coords: mapCoordinates });
         }
     }, err => console.error("Gagal memuat Koordinat Denah dari Firestore:", err));
@@ -208,16 +284,34 @@ async function loadFromFirebase() {
 
 function loadFromLocalStorage() {
     const lsEvents = localStorage.getItem('sardas_events');
-    const lsFacilities = localStorage.getItem('sardas_facilities');
+    const lsFacilities = localStorage.getItem(LOCAL_STORAGE_KEYS.facilities);
     const lsCms = localStorage.getItem('sardas_cms');
-    const lsMap = localStorage.getItem('sardas_mapCoordinates');
+    const lsMap = localStorage.getItem(LOCAL_STORAGE_KEYS.mapCoordinates);
     const lsVehicles = localStorage.getItem('sardas_vehicles');
     const lsComplaints = localStorage.getItem('sardas_complaints');
     
     if (lsEvents) events = JSON.parse(lsEvents);
-    if (lsFacilities) facilities = JSON.parse(lsFacilities);
+    if (lsFacilities) {
+        try {
+            const parsed = JSON.parse(lsFacilities);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                facilities = parsed;
+            }
+        } catch (err) {
+            console.warn('Gagal mengurai localStorage fasilitas:', err);
+        }
+    }
     if (lsCms) cmsContent = JSON.parse(lsCms);
-    if (lsMap && JSON.parse(lsMap).coords) mapCoordinates = JSON.parse(lsMap).coords;
+    if (lsMap) {
+        try {
+            const parsedMap = JSON.parse(lsMap);
+            if (parsedMap && parsedMap.coords) {
+                mapCoordinates = parsedMap.coords;
+            }
+        } catch (err) {
+            console.warn('Gagal mengurai localStorage koordinat denah:', err);
+        }
+    }
     if (lsVehicles) vehicles = JSON.parse(lsVehicles);
     if (lsComplaints) complaints = JSON.parse(lsComplaints);
     
@@ -276,14 +370,21 @@ async function saveToDatabase(collectionName, docId, data, isUpdate = false) {
             }
         }
     } else {
-        if (collectionName === 'events' || collectionName === 'vehicles' || collectionName === 'complaints') {
-            if (isUpdate) {
-                await db.collection(collectionName).doc(docId).update(data);
+        try {
+            if (collectionName === 'events' || collectionName === 'vehicles' || collectionName === 'complaints') {
+                if (isUpdate) {
+                    await db.collection(collectionName).doc(docId).update(data);
+                } else {
+                    await db.collection(collectionName).add(data);
+                }
             } else {
-                await db.collection(collectionName).add(data);
+                await db.collection("settings").doc(docId).set(data);
             }
-        } else {
-            await db.collection("settings").doc(docId).set(data);
+        } catch (error) {
+            console.error(`Gagal menyimpan ${collectionName}/${docId} ke Firestore:`, error);
+            alert("Gagal menyimpan ke Firebase. Data akan disimpan sementara di browser dan akan disinkronkan kembali ketika koneksi tersedia.");
+            useLocalStorageFallback = true;
+            return saveToDatabase(collectionName, docId, data, isUpdate);
         }
     }
 }
@@ -1766,23 +1867,34 @@ window.addEventListener('touchend', () => {
 DOM.saveMapCoordsBtn.addEventListener('click', async () => {
     const fac = DOM.editorFacilitySelect.value;
     if (!fac) {
-        alert("Pilih fasilitas terlebih dahulu.");
+        window.alert("Pilih fasilitas terlebih dahulu.");
         return;
     }
-    
+
     const normalizedFac = normalizeFacilityName(fac);
-    
+    const originalBtnContent = DOM.saveMapCoordsBtn.innerHTML;
+    DOM.saveMapCoordsBtn.disabled = true;
+    DOM.editorFacilitySelect.disabled = true;
+    DOM.saveMapCoordsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+
     mapCoordinates[normalizedFac] = {
         top: DOM.editableHighlight.style.top,
         left: DOM.editableHighlight.style.left,
         width: DOM.editableHighlight.style.width,
         height: DOM.editableHighlight.style.height
     };
-    
-    await saveToDatabase('settings', 'mapCoordinates', { coords: mapCoordinates });
-    
-    alert(`Koordinat denah untuk "${fac}" berhasil disimpan!`);
+
+    try {
+        await saveToDatabase('settings', 'mapCoordinates', { coords: mapCoordinates });
+    } finally {
+        DOM.saveMapCoordsBtn.disabled = false;
+        DOM.editorFacilitySelect.disabled = false;
+        DOM.saveMapCoordsBtn.innerHTML = originalBtnContent;
+    }
+
     populateMapEditorFacilitySelect(fac);
+    renderFacilities();
+    DOM.editorFacilitySelect.focus();
 });
 
 DOM.deleteMapCoordsBtn.addEventListener('click', async () => {
@@ -1801,6 +1913,7 @@ DOM.deleteMapCoordsBtn.addEventListener('click', async () => {
     
     alert(`Koordinat denah untuk "${fac}" berhasil dihapus.`);
     populateMapEditorFacilitySelect("");
+    renderFacilities();
 });
 
 document.addEventListener('DOMContentLoaded', init);
