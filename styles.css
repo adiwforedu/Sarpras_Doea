@@ -961,3 +961,127 @@ body.admin-mode .card-actions {
     .vehicle-meta-grid { grid-template-columns: 1fr; }
     .glass-footer { padding: 1rem 0.8rem; font-size: 0.8rem; margin-top: auto; }
 }
+
+/* Modul Barang Habis Pakai Styles */
+.stock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.stock-badge.safe {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.stock-badge.low {
+    background: rgba(225, 29, 72, 0.15);
+    color: #e11d48;
+    border: 1px solid rgba(225, 29, 72, 0.3);
+    animation: pulse 2s infinite;
+}
+
+.consumable-row-item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Print Media Styles for Official Reports */
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+    #reportModal, #reportModal * {
+        visibility: visible !important;
+    }
+    #reportModal {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        background: white !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+    .printable-area {
+        box-shadow: none !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+    }
+    .report-table th, .report-table td {
+        border: 1px solid #000 !important;
+        padding: 6px 8px !important;
+        color: #000 !important;
+    }
+    .report-table th {
+        background: #e2e8f0 !important;
+        font-weight: bold !important;
+    }
+}
+
+/* --- Inventory Datatable Modern Styling --- */
+.inventory-table tbody tr {
+    transition: all 0.15s ease-in-out;
+    border-bottom: 1px solid #f1f5f9;
+}
+.inventory-table tbody tr:hover {
+    background: rgba(37, 99, 235, 0.03);
+}
+.inventory-table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+}
+.stock-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+.stock-pill.safe {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.stock-pill.low {
+    background: rgba(225, 29, 72, 0.1);
+    color: #e11d48;
+    border: 1px solid rgba(225, 29, 72, 0.2);
+}
+.stock-progress-track {
+    width: 70px;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+.stock-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+

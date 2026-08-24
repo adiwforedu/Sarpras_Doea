@@ -34,12 +34,15 @@
                         <p id="cms-header-subtitle" class="cms-editable" data-cms-key="headerSubtitle">Sistem Informasi Sarana & Prasarana - SMAN 2 Ciamis</p>
                     </div>
                 </div>
-                <div class="header-actions">
-                    <button id="adminLoginBtn" class="header-btn glass" title="Admin Login">
-                        <i class="fas fa-lock"></i>
+                <div class="header-actions" style="display: flex; gap: 8px; align-items: center;">
+                    <button id="printReportBtn" class="btn btn-secondary glass" title="Rekap & Cetak Laporan Sederhana" style="padding: 6px 14px; gap: 6px; display: flex; align-items: center; font-size: 0.85rem; font-weight: 600; border-radius: 8px;">
+                        <i class="fas fa-file-alt" style="color: var(--color-primary);"></i> <span>Rekap Laporan</span>
                     </button>
-                    <button id="adminLogoutBtn" class="header-btn glass hidden" title="Logout">
-                        <i class="fas fa-sign-out-alt"></i>
+                    <button id="adminLoginBtn" class="btn btn-secondary glass" title="Otorisasi Akses (Login)" style="padding: 6px 14px; gap: 6px; display: flex; align-items: center; font-size: 0.85rem; font-weight: 600; border-radius: 8px;">
+                        <i class="fas fa-lock" style="color: var(--color-primary);"></i> <span>Login</span>
+                    </button>
+                    <button id="adminLogoutBtn" class="btn btn-secondary glass hidden" title="Keluar / Logout" style="padding: 6px 14px; gap: 6px; display: flex; align-items: center; font-size: 0.85rem; font-weight: 600; border-radius: 8px;">
+                        <i class="fas fa-lock-open" style="color: #e11d48;"></i> <span id="adminStatusText">Keluar</span>
                     </button>
                 </div>
             </div>
@@ -51,6 +54,7 @@
                 <button id="tabSarprasBtn" class="tab-btn active"><i class="fas fa-calendar-alt"></i> Jadwal Sarpras</button>
                 <button id="tabVehiclesBtn" class="tab-btn"><i class="fas fa-car"></i> Perawatan Kendaraan</button>
                 <button id="tabComplaintsBtn" class="tab-btn"><i class="fas fa-bullhorn"></i> Pengaduan Warga Sekolah</button>
+                <button id="tabConsumablesBtn" class="tab-btn hidden authorized-only"><i class="fas fa-boxes"></i> Barang Habis Pakai</button>
             </div>
 
             <!-- Loading Indicator -->
@@ -136,6 +140,116 @@
                 <!-- Complaints Grid -->
                 <div id="complaintsGrid" class="events-grid">
                     <!-- Complaint cards will be injected here by JS -->
+                </div>
+            </section>
+
+            <!-- Section 4: Barang Habis Pakai (Stok & Mutasi) -->
+            <section id="consumablesSection" class="hidden" style="margin-top: 1rem;">
+                <!-- Summary Statistics Cards -->
+                <div class="summary-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div id="cardStatTotal" class="stat-card glass" style="padding: 1rem; border-radius: 12px; display: flex; align-items: center; gap: 1rem; cursor: pointer;" title="Tampilkan Semua Barang">
+                        <div class="stat-icon" style="background: rgba(37, 99, 235, 0.1); color: var(--color-primary); width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: #64748b; font-weight: 500;">Total Jenis Barang</div>
+                            <div id="statTotalConsumables" style="font-size: 1.4rem; font-weight: 700; color: var(--color-text);">0</div>
+                        </div>
+                    </div>
+                    <div id="cardStatLowStock" class="stat-card glass" style="padding: 1rem; border-radius: 12px; display: flex; align-items: center; gap: 1rem; cursor: pointer;" title="Klik untuk Filter Barang Stok Kritis">
+                        <div class="stat-icon" style="background: rgba(225, 29, 72, 0.1); color: #e11d48; width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: #64748b; font-weight: 500;">Stok Kritis / Warning</div>
+                            <div id="statLowStockConsumables" style="font-size: 1.4rem; font-weight: 700; color: #e11d48;">0</div>
+                        </div>
+                    </div>
+                    <div id="cardStatMutations" class="stat-card glass" style="padding: 1rem; border-radius: 12px; display: flex; align-items: center; gap: 1rem; cursor: pointer;" title="Klik untuk Lihat Riwayat Mutasi">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.85rem; color: #64748b; font-weight: 500;">Total Mutasi Transaksi</div>
+                            <div id="statTotalMutations" style="font-size: 1.4rem; font-weight: 700; color: var(--color-text);">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-bar" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                    <div class="search-box glass" style="flex: 1; display: flex; gap: 10px; align-items: center; padding: 6px 14px; border-radius: 10px; background: rgba(255,255,255,0.7); min-width: 260px;">
+                        <i class="fas fa-search" style="color: #64748b;"></i>
+                        <input type="search" id="consumableSearchInput" class="form-control" style="border: none; background: transparent; padding: 4px;" placeholder="Cari nama barang atau lokasi...">
+                        <select id="consumableCategoryFilter" class="form-control" style="width: auto; padding: 4px 8px; font-size: 0.85rem;">
+                            <option value="all">Semua Kategori</option>
+                            <option value="ATK">ATK / Alat Tulis</option>
+                            <option value="Kebersihan">Kebersihan</option>
+                            <option value="Kelistrikan">Kelistrikan</option>
+                            <option value="Olahraga">Olahraga</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+
+                    <!-- View Mode Toggle Switcher -->
+                    <div style="display: flex; background: rgba(0,0,0,0.06); padding: 4px; border-radius: 10px; gap: 3px; border: 1px solid rgba(0,0,0,0.08);">
+                        <button id="consumableTableViewBtn" class="btn btn-sm btn-light active" title="Tampilan Tabel Modern" style="padding: 5px 12px; font-size: 0.82rem; font-weight: 600; border-radius: 7px;">
+                            <i class="fas fa-table" style="color: var(--color-primary);"></i> Tabel
+                        </button>
+                        <button id="consumableCardViewBtn" class="btn btn-sm btn-light" title="Tampilan Kartu Grid" style="padding: 5px 12px; font-size: 0.82rem; font-weight: 600; border-radius: 7px;">
+                            <i class="fas fa-th-large"></i> Kartu
+                        </button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <!-- Public Action: Multi-Item Out Transaction -->
+                        <button id="openPublicMultiOutBtn" class="btn btn-primary">
+                            <i class="fas fa-hand-holding"></i> Form Pengambilan (Multi-Barang)
+                        </button>
+                        <!-- Admin Only Actions (+ Tambah Barang Baru & Restock) -->
+                        <div id="adminConsumableActions" class="admin-only hidden" style="display: flex; gap: 8px;">
+                            <button id="addConsumableItemBtn" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Tambah Barang Baru
+                            </button>
+                            <button id="adminRestockBtn" class="btn btn-secondary">
+                                <i class="fas fa-boxes"></i> Restock (Barang Masuk)
+                            </button>
+                        </div>
+                        <button id="viewConsumableHistoryBtn" class="btn btn-secondary">
+                            <i class="fas fa-history"></i> Riwayat Mutasi
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Filter Indicator Banner -->
+                <div id="activeConsumableFilterBanner" class="hidden" style="display: flex; align-items: center; justify-content: space-between; background: rgba(225,29,72,0.08); border: 1px solid rgba(225,29,72,0.25); color: #be123c; padding: 8px 16px; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 600;">
+                    <span><i class="fas fa-filter"></i> Menampilkan Barang Stok Kritis / Warning Saja</span>
+                    <button id="clearConsumableFilterBtn" class="btn btn-sm btn-secondary" style="padding: 2px 10px; font-size: 0.75rem;"><i class="fas fa-times"></i> Reset Filter</button>
+                </div>
+
+                <!-- View 1: Modern Inventory Datatable Container (Default) -->
+                <div id="consumablesTableContainer" class="glass" style="overflow-x: auto; border-radius: 12px; padding: 12px; background: rgba(255,255,255,0.85); box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 1.5rem;">
+                    <table class="inventory-table" style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #cbd5e1; color: #334155; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(241,245,249,0.7);">
+                                <th style="padding: 12px 16px; border-radius: 8px 0 0 8px;">Nama Barang</th>
+                                <th style="padding: 12px 16px;">Kategori</th>
+                                <th style="padding: 12px 16px;">Jumlah Stok</th>
+                                <th style="padding: 12px 16px;">Satuan</th>
+                                <th style="padding: 12px 16px;">Lokasi Penyimpanan</th>
+                                <th style="padding: 12px 16px; text-align: right; border-radius: 0 8px 8px 0;">Aksi Cepat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="consumablesTableBody">
+                            <!-- Populated dynamically by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- View 2: Cards Grid Container (Optional) -->
+                <div id="consumablesCardContainer" class="hidden">
+                    <div id="consumablesGrid" class="events-grid">
+                        <!-- Cards populated dynamically -->
+                    </div>
                 </div>
             </section>
         </main>
@@ -346,18 +460,18 @@
             </div>
         </div>
 
-        <!-- Login Modal -->
+        <!-- Login Modal (Admin / Operator) -->
         <div id="loginModal" class="modal hidden">
             <div class="modal-content glass login-box">
                 <div class="modal-header">
-                    <h3>Otorisasi Admin</h3>
+                    <h3>Otorisasi Akses (Admin / Operator)</h3>
                     <button class="close-btn" id="closeLoginModal" type="button"><i class="fas fa-times"></i></button>
                 </div>
                 <form id="loginForm">
                     <div class="form-group">
-                        <label>Password</label>
+                        <label>Password Akses</label>
                         <input type="password" id="adminPassword" name="admin_password" autocomplete="current-password" class="form-control"
-                            placeholder="Masukkan password admin" required>
+                            placeholder="Masukkan password otorisasi" required>
                     </div>
                     <button type="submit" id="loginSubmitBtn" class="btn btn-primary w-100">Masuk</button>
                 </form>
@@ -562,6 +676,170 @@
         </div>
     </div>
 
+
+
+    <!-- Modal Form Pengambilan Multi-Barang (Public Warga Sekolah) -->
+    <div id="publicMultiOutModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 650px;">
+            <span class="close-modal" id="closePublicMultiOutModal">&times;</span>
+            <h3 style="margin-top: 0; color: var(--color-primary);"><i class="fas fa-dolly"></i> Form Pengambilan Barang (Multi-Barang)</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.2rem;">
+                Pilih satu atau beberapa barang sekaligus yang diambil/digunakan, tentukan jumlahnya, lalu masukkan password verifikasi warga sekolah.
+            </p>
+
+            <form id="publicMultiOutForm">
+                <!-- Dynamic Item Rows Container -->
+                <div class="form-group">
+                    <label style="font-weight: 600;">Daftar Barang & Jumlah Pengambilan</label>
+                    <div id="consumableItemRowsContainer" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
+                        <!-- Item row dynamically appended -->
+                    </div>
+                    <button type="button" id="addConsumableRowBtn" class="btn btn-secondary btn-sm" style="margin-top: 4px;">
+                        <i class="fas fa-plus-circle"></i> + Tambah Barang Lain
+                    </button>
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Tanggal Pengambilan</label>
+                        <input type="date" id="multiOutDate" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Nama Pengambil / Penerima</label>
+                        <input type="text" id="multiOutActor" required class="form-control" placeholder="Contoh: Pak Anton / Bu Rina / OSIS">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Keperluan / Peruntukan</label>
+                    <input type="text" id="multiOutNotes" required class="form-control" placeholder="Contoh: Kegiatan Ujian Sekolah / Kebersihan Kelas XII">
+                </div>
+
+                <div class="form-group" style="background: rgba(37,99,235,0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(37,99,235,0.15);">
+                    <label style="color: var(--color-primary); font-weight: 600;"><i class="fas fa-lock"></i> Password Verifikasi Warga Sekolah</label>
+                    <input type="password" id="multiOutPassword" required class="form-control" placeholder="Masukkan password verifikasi">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelPublicMultiOutBtn">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="savePublicMultiOutBtn"><i class="fas fa-paper-plane"></i> Simpan Pengambilan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Admin Tambah/Edit Barang Habis Pakai -->
+    <div id="adminConsumableModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="closeAdminConsumableModal">&times;</span>
+            <h3 id="adminConsumableModalTitle" style="margin-top: 0; color: var(--color-primary);">Tambah Barang Habis Pakai</h3>
+            <form id="adminConsumableForm">
+                <input type="hidden" id="adminConsumableId">
+                <div class="form-group">
+                    <label>Nama Barang</label>
+                    <input type="text" id="adminConsumableName" required class="form-control" placeholder="Contoh: Kertas HVS A4 80gr / Spidol Boardmarker">
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="adminConsumableCategory" class="form-control">
+                            <option value="ATK">ATK / Alat Tulis</option>
+                            <option value="Kebersihan">Kebersihan</option>
+                            <option value="Kelistrikan">Kelistrikan</option>
+                            <option value="Olahraga">Olahraga</option>
+                            <option value="Lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Satuan Unit</label>
+                        <input type="text" id="adminConsumableUnit" required class="form-control" placeholder="Rim / Pcs / Box / Botol / Galon / Roll">
+                    </div>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Stok Saat Ini</label>
+                        <input type="number" id="adminConsumableStock" min="0" required class="form-control" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Stok Minimum (Batas Warning)</label>
+                        <input type="number" id="adminConsumableMinStock" min="0" required class="form-control" placeholder="Contoh: 5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Lokasi Penyimpanan</label>
+                    <input type="text" id="adminConsumableLocation" class="form-control" placeholder="Contoh: Gudang Sarpras Rak A1 / Lemari ATK">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelAdminConsumableBtn">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="saveAdminConsumableBtn">Simpan Barang</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Admin Restock (Barang Masuk) -->
+    <div id="adminRestockModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="closeAdminRestockModal">&times;</span>
+            <h3 style="margin-top: 0; color: var(--color-primary);"><i class="fas fa-boxes"></i> Restock Barang Masuk (Admin)</h3>
+            <form id="adminRestockForm">
+                <div class="form-group">
+                    <label>Pilih Barang yang Dibarukan / Restock</label>
+                    <select id="restockItemId" required class="form-control">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Jumlah Masuk (+Qty)</label>
+                        <input type="number" id="restockQuantity" min="1" required class="form-control" placeholder="Jumlah barang">
+                    </div>
+                    <div class="form-group">
+                        <label>Tanggal Masuk</label>
+                        <input type="date" id="restockDate" required class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Sumber / Supplier / Toko</label>
+                    <input type="text" id="restockSupplier" class="form-control" placeholder="Contoh: Toko Buku Ciamis / Pengadaan Sarpras APBD">
+                </div>
+                <div class="form-group">
+                    <label>Catatan / Keterangan</label>
+                    <input type="text" id="restockNotes" class="form-control" placeholder="Catatan opsional...">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelAdminRestockBtn">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="saveAdminRestockBtn"><i class="fas fa-plus"></i> Tambahkan Stok</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Riwayat Mutasi Transaksi -->
+    <div id="consumableHistoryModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-modal" id="closeConsumableHistoryModal">&times;</span>
+            <h3 style="margin-top: 0; color: var(--color-primary);"><i class="fas fa-history"></i> Riwayat Mutasi Barang Habis Pakai</h3>
+            <div style="overflow-x: auto; max-height: 450px; margin-top: 1rem;">
+                <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: rgba(37,99,235,0.08); text-align: left;">
+                            <th style="padding: 8px 12px;">Tanggal</th>
+                            <th style="padding: 8px 12px;">Tipe</th>
+                            <th style="padding: 8px 12px;">Nama Barang</th>
+                            <th style="padding: 8px 12px;">Jumlah</th>
+                            <th style="padding: 8px 12px;">Penerima / Sumber</th>
+                            <th style="padding: 8px 12px;">Keperluan / Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="consumableHistoryTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Map Editor Modal (Khusus Admin) -->
     <div id="mapEditorModal" class="modal hidden">
         <div class="modal-content map-modal-content">
@@ -598,10 +876,156 @@
         </div>
     </div>
 
-    <!-- Scripts: Menggunakan Firebase Compat agar bisa berjalan langsung tanpa server (file://) -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
+    <!-- Rekap Laporan & Cetak Modal -->
+    <div id="reportModal" class="modal hidden">
+        <div class="modal-content glass" style="max-width: 950px; width: 95%;">
+            <div class="modal-header no-print">
+                <h3 style="display: flex; align-items: center; gap: 8px;"><i class="fas fa-print" style="color: var(--color-primary);"></i> Rekap & Cetak Laporan Sederhana</h3>
+                <button class="close-btn" id="closeReportModal" type="button"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Controls Toolbar (Hidden when printing) -->
+            <div class="no-print" style="display: flex; gap: 12px; margin-bottom: 1rem; flex-wrap: wrap; background: rgba(255,255,255,0.7); padding: 12px; border-radius: 10px; border: 1px solid var(--glass-border); align-items: center;">
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; display: block; color: var(--color-text);">Pilih Jenis Laporan</label>
+                    <select id="reportTypeSelect" class="form-control">
+                        <option value="events">📅 Laporan Jadwal Penggunaan Sarpras</option>
+                        <option value="consumables">📦 Laporan Stok & Barang Habis Pakai</option>
+                        <option value="consumable_logs">📤 Laporan Riwayat Mutasi Barang (Keluar/Masuk)</option>
+                        <option value="vehicles">🚗 Laporan Kondisi & Perawatan Kendaraan</option>
+                        <option value="complaints">📢 Laporan Pengaduan & Aspirasi Warga</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <div>
+                        <label style="font-size: 0.75rem; font-weight: 600; margin-bottom: 2px; display: block; color: var(--color-text);">Kota Titi Mangsa</label>
+                        <input type="text" id="reportPlaceInput" class="form-control" value="Ciamis" placeholder="Ciamis" style="padding: 6px 10px; font-size: 0.82rem; width: 100px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; font-weight: 600; margin-bottom: 2px; display: block; color: var(--color-text);">Tanggal Titi Mangsa</label>
+                        <input type="date" id="reportDateInput" class="form-control" style="padding: 5px 8px; font-size: 0.82rem;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap;">
+                    <button id="toggleEditKopBtn" class="btn btn-secondary"><i class="fas fa-edit"></i> Edit Kop & TTD</button>
+                    <button id="doPrintBtn" class="btn btn-primary"><i class="fas fa-print"></i> Cetak / Simpan PDF</button>
+                    <button id="doExportExcelBtn" class="btn btn-secondary"><i class="fas fa-file-excel"></i> Unduh Excel (.csv)</button>
+                </div>
+            </div>
+
+            <!-- Form Edit Kop Surat & Penandatangan (Hidden by default) -->
+            <div id="editKopContainer" class="no-print hidden" style="background: rgba(37,99,235,0.04); border: 1px solid rgba(37,99,235,0.2); padding: 16px; border-radius: 10px; margin-bottom: 1.5rem;">
+                <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--color-primary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-sliders-h"></i> Pengaturan Kop Surat & Tanda Tangan Laporan
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Instansi Induk (Baris 1)</label>
+                        <input type="text" id="inputGovName" class="form-control" placeholder="PEMERINTAH PROVINSI JAWA BARAT">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Dinas / Departemen (Baris 2)</label>
+                        <input type="text" id="inputDeptName" class="form-control" placeholder="DINAS PENDIDIKAN">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Nama Sekolah / Instansi (Baris 3)</label>
+                        <input type="text" id="inputSchoolName" class="form-control" placeholder="SMAN 2 CIAMIS">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Sub-Judul / Tagline</label>
+                        <input type="text" id="inputSubTitle" class="form-control" placeholder="Sistem Informasi Sarana & Prasarana (SISARNA)">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Alamat Lengkap</label>
+                        <input type="text" id="inputAddress" class="form-control" placeholder="Jl. KH. Ahmad Dahlan No. 2, Ciamis - Jawa Barat 46211">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Kontak / Website / Email</label>
+                        <input type="text" id="inputContact" class="form-control" placeholder="Website: www.sman2ciamis.sch.id | Email: sman2ciamis@yahoo.co.id">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Jabatan Penandatangan 1 (Kiri)</label>
+                        <input type="text" id="inputPrincipalTitle" class="form-control" placeholder="Kepala SMAN 2 Ciamis">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Nama Penandatangan 1</label>
+                        <input type="text" id="inputPrincipalName" class="form-control" placeholder="Drs. H. Nurdin, M.Pd.">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">NIP Penandatangan 1</label>
+                        <input type="text" id="inputPrincipalNip" class="form-control" placeholder="19670101 199203 1 005">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Jabatan Penandatangan 2 (Kanan)</label>
+                        <input type="text" id="inputStaffTitle" class="form-control" placeholder="Wakasek Sarpras">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">Nama Penandatangan 2</label>
+                        <input type="text" id="inputStaffName" class="form-control" placeholder="Nama Wakasek Sarpras">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="font-size: 0.75rem; font-weight: 600;">NIP Penandatangan 2</label>
+                        <input type="text" id="inputStaffNip" class="form-control" placeholder="NIP Wakasek Sarpras (opsional)">
+                    </div>
+                </div>
+                <div style="margin-top: 12px; text-align: right;">
+                    <button id="saveKopBtn" class="btn btn-primary" style="padding: 6px 16px; font-size: 0.85rem;"><i class="fas fa-save"></i> Simpan Kop & Penandatangan</button>
+                </div>
+            </div>
+
+            <!-- Printable Document Area -->
+            <div id="printableReportArea" class="printable-area" style="background: white; padding: 24px; border-radius: 8px; color: #1e293b; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <!-- Kop Surat Resmi -->
+                <div class="kop-surat" style="display: flex; align-items: center; justify-content: center; gap: 16px; border-bottom: 3px double #000; padding-bottom: 12px; margin-bottom: 20px;">
+                    <img id="kopLogoImg" src="logo.png" alt="Logo" style="max-height: 75px; max-width: 75px; object-fit: contain;" onerror="this.style.display='none';">
+                    <div style="text-align: center; flex: 1;">
+                        <h4 id="kopGovName" style="margin: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; color: #000; font-weight: 700;">PEMERINTAH PROVINSI JAWA BARAT</h4>
+                        <h4 id="kopDeptName" style="margin: 2px 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; color: #000; font-weight: 700;">DINAS PENDIDIKAN</h4>
+                        <h3 id="kopSchoolName" style="margin: 2px 0; font-size: 1.25rem; text-transform: uppercase; font-weight: 800; color: #000;">SMAN 2 CIAMIS</h3>
+                        <p id="kopAddress" style="margin: 2px 0 0 0; font-size: 0.78rem; color: #475569;">Jl. KH. Ahmad Dahlan No. 2, Ciamis - Jawa Barat 46211</p>
+                        <p id="kopContact" style="margin: 1px 0 0 0; font-size: 0.75rem; color: #64748b;">Website: www.sman2ciamis.sch.id | Email: sman2ciamis@yahoo.co.id</p>
+                    </div>
+                </div>
+
+                <!-- Report Header Info -->
+                <div style="margin-bottom: 16px; font-size: 0.85rem;">
+                    <strong style="font-size: 1.05rem; color: #0f172a;" id="reportTitleHeading">Laporan Jadwal Penggunaan Sarpras</strong>
+                    <p style="margin: 2px 0 0 0; color: #64748b;" id="reportSubHeading">SMAN 2 Ciamis</p>
+                </div>
+
+                <!-- Report Table -->
+                <div style="overflow-x: auto;">
+                    <table class="report-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; border: 1px solid #cbd5e1;">
+                        <thead id="reportTableHeader" style="background: #f1f5f9; color: #0f172a; text-align: left;">
+                            <!-- Dynamic Headers -->
+                        </thead>
+                        <tbody id="reportTableBody">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Report Footer Signatures (Proporsional & Tanpa Kurung) -->
+                <div style="display: flex; justify-content: space-between; margin-top: 45px; font-size: 0.85rem; text-align: center; page-break-inside: avoid;">
+                    <div style="width: 250px; text-align: center;">
+                        <p style="margin-bottom: 70px; line-height: 1.4;">Mengetahui,<br><strong id="principalTitleText">Kepala SMAN 2 Ciamis</strong></p>
+                        <p style="margin: 0; font-weight: 700; text-decoration: underline; text-underline-offset: 3px;" id="principalNameText">Drs. H. Nurdin, M.Pd.</p>
+                        <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: #334155;">NIP. <span id="principalNipText">19670101 199203 1 005</span></p>
+                    </div>
+                    <div style="width: 250px; text-align: center;">
+                        <p style="margin-bottom: 70px; line-height: 1.4;"><span id="reportSignPlace">Ciamis</span>, <span id="reportSignDate">24 Agustus 2026</span><br><strong id="staffTitleText">Wakasek Sarpras</strong></p>
+                        <p style="margin: 0; font-weight: 700; text-decoration: underline; text-underline-offset: 3px;" id="staffNameText">Wakasek Sarpras SMAN 2 Ciamis</p>
+                        <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: #334155;">NIP. <span id="staffNipText">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Konfigurasi & Aplikasi GAS -->
+    <script src="gas-config.js"></script>
     <script src="app.js"></script>
 </body>
 
