@@ -130,9 +130,34 @@
                 <!-- Filter Pills -->
                 <div class="filter-pills">
                     <button class="pill-btn active" data-filter="all">Semua Laporan</button>
-                    <button class="pill-btn" data-filter="Pending">⏳ Pending (Diterima)</button>
+                    <button class="pill-btn" data-filter="Pending">🔴 Pending (Belum Diperbaiki)</button>
                     <button class="pill-btn" data-filter="Dalam Perbaikan">🛠️ Dalam Perbaikan</button>
                     <button class="pill-btn" data-filter="Selesai">✅ Selesai Dikerjakan</button>
+                </div>
+
+                <!-- Pemetaan Denah Status Pengaduan -->
+                <div class="map-container glass" style="margin-top: 1.2rem; margin-bottom: 1.5rem; padding: 1.2rem; border-radius: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 0.8rem;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.15rem; color: var(--color-primary); display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-map-marked-alt"></i> Pemetaan Denah Status Pengaduan Fasilitas
+                            </h3>
+                            <p style="font-size: 0.82rem; color: var(--color-text-muted); margin: 2px 0 0 0;">
+                                Klik pada lokasi ruangan untuk menyaring laporan pengaduan di ruangan tersebut.
+                            </p>
+                        </div>
+                        <!-- Legend Status Warna -->
+                        <div class="map-complaint-legend" style="display: flex; gap: 12px; font-size: 0.82rem; font-weight: 600; flex-wrap: wrap; background: rgba(255,255,255,0.6); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <span style="display: inline-flex; align-items: center; gap: 6px;"><i class="fas fa-square" style="color: #10b981;"></i> Hijau: Aman / Selesai</span>
+                            <span style="display: inline-flex; align-items: center; gap: 6px;"><i class="fas fa-square" style="color: #2563eb;"></i> Biru: Dalam Perbaikan</span>
+                            <span style="display: inline-flex; align-items: center; gap: 6px;"><i class="fas fa-square" style="color: #e11d48;"></i> Merah: Pending</span>
+                        </div>
+                    </div>
+
+                    <div class="map-wrapper" id="complaintsMapWrapper" style="position: relative; border-radius: 12px; overflow: hidden; background: #f8fafc; border: 1px solid var(--glass-border);">
+                        <img src="denah.png" alt="Denah Sekolah" id="complaintsSchoolMap" style="width: 100%; height: auto; display: block;" onerror="this.onerror=null; this.src='https://placehold.co/800x600/eeeeee/999999?text=Denah+Belum+Diunggah';">
+                        <!-- Dynamic Facility Status Overlay Boxes will be injected here by JS -->
+                    </div>
                 </div>
 
                 <h2 class="section-title">Papan Pemantauan Pengaduan & Aspirasi Warga Sekolah</h2>
@@ -605,8 +630,10 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Lokasi Fasilitas</label>
-                        <input type="text" id="complaintLocation" required class="form-control" placeholder="Contoh: Ruang X E 1 / Toilet Guru / Lapang Upacara">
+                        <label>Lokasi Fasilitas / Ruangan</label>
+                        <select id="complaintLocation" required class="form-control">
+                            <option value="">-- Pilih Lokasi Fasilitas / Ruangan --</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Kategori Masalah</label>
@@ -622,15 +649,23 @@
                 </div>
 
                 <div class="form-group">
-                    <div class="form-group">
-                        <label>No. WhatsApp / Kontak (Opsional)</label>
-                        <input type="text" id="complaintContact" class="form-control" placeholder="Contoh: 081234567890 (Untuk info perbaikan)">
-                    </div>
+                    <label>No. WhatsApp / Kontak (Opsional)</label>
+                    <input type="text" id="complaintContact" class="form-control" placeholder="Contoh: 081234567890 (Untuk info perbaikan)">
                 </div>
 
                 <div class="form-group">
                     <label>Rincian Deskripsi Pengaduan / Kebutuhan</label>
                     <textarea id="complaintDesc" rows="3" required class="form-control" placeholder="Jelaskan secara detail kekurangan atau kerusakan yang ditemukan..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-camera"></i> Foto / Bukti Dokumentasi Kerusakan (Opsional)</label>
+                    <input type="file" id="complaintImageInput" accept="image/*" class="form-control">
+                    <input type="hidden" id="complaintImageUrl">
+                    <div id="complaintImagePreview" class="hidden" style="margin-top: 8px; position: relative; max-width: 220px;">
+                        <img id="complaintPreviewImg" src="" alt="Preview Foto Dokumentasi" style="width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; max-height: 160px; object-fit: cover;">
+                        <button type="button" id="removeComplaintImgBtn" style="position: absolute; top: -6px; right: -6px; background: #e11d48; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" title="Hapus Foto">&times;</button>
+                    </div>
                 </div>
 
                 <div class="form-group">

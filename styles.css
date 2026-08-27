@@ -885,9 +885,13 @@ body.admin-mode .card-actions {
     align-items: center;
     gap: 5px;
 }
-.badge-pending { background: #fef9c3; color: #856404; border: 1px solid #ffeba8; }
+.badge-pending { background: #ffe4e6; color: #e11d48; border: 1px solid #fecdd3; }
 .badge-in-progress { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
 .badge-completed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+
+body.admin-mode .complaint-card .complaint-header {
+    padding-right: 75px;
+}
 
 .complaint-location {
     font-size: 1.1rem;
@@ -903,9 +907,22 @@ body.admin-mode .card-actions {
     font-size: 0.8rem;
     font-weight: 600;
 }
-.complaint-reporter {
+.complaint-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     font-size: 0.83rem;
     color: var(--color-text-muted);
+}
+.complaint-reporter, .complaint-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.complaint-time {
+    color: #64748b;
+    font-size: 0.8rem;
 }
 .complaint-desc {
     font-size: 0.95rem;
@@ -923,6 +940,57 @@ body.admin-mode .card-actions {
     padding: 0.8rem;
     border-radius: 8px;
     font-size: 0.88rem;
+}
+
+/* Visualisasi Pemetaan Denah Pengaduan Status Warna */
+.complaint-map-box {
+    position: absolute;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    z-index: 10;
+    padding: 2px 4px;
+    text-align: center;
+    line-height: 1.1;
+    overflow: hidden;
+}
+.complaint-map-box:hover {
+    transform: scale(1.08);
+    z-index: 25;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+.complaint-map-box.status-green {
+    background: rgba(16, 185, 129, 0.45);
+    border: 2px solid #10b981;
+}
+.complaint-map-box.status-blue {
+    background: rgba(37, 99, 235, 0.65);
+    border: 2px solid #1d4ed8;
+    animation: pulse-blue-box 2s infinite;
+}
+.complaint-map-box.status-red {
+    background: rgba(225, 29, 72, 0.7);
+    border: 2px solid #e11d48;
+    animation: pulse-red-box 1.5s infinite;
+}
+
+@keyframes pulse-red-box {
+    0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+}
+@keyframes pulse-blue-box {
+    0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
 }
 
 .filter-pills {

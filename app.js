@@ -242,6 +242,7 @@ const DOM = {
     complaintSearchInput: document.getElementById('complaintSearchInput'),
     addComplaintBtn: document.getElementById('addComplaintBtn'),
     complaintsGrid: document.getElementById('complaintsGrid'),
+    complaintsMapWrapper: document.getElementById('complaintsMapWrapper'),
     complaintModal: document.getElementById('complaintModal'),
     closeComplaintModal: document.getElementById('closeComplaintModal'),
     cancelComplaintBtn: document.getElementById('cancelComplaintBtn'),
@@ -347,8 +348,26 @@ async function loadFromGAS() {
             const localComplaints = JSON.parse(localStorage.getItem('sardas_complaints') || '[]');
             const gasComplaints = Array.isArray(data.complaints) ? data.complaints : [];
             const mergedComplaintsMap = new Map();
-            [...DEFAULT_COMPLAINTS, ...localComplaints, ...gasComplaints].forEach(item => {
-                if (item && item.id) mergedComplaintsMap.set(item.id, item);
+            [...DEFAULT_COMPLAINTS, ...gasComplaints, ...localComplaints].forEach(item => {
+                if (item && item.id) {
+                    const existing = mergedComplaintsMap.get(item.id);
+                    if (existing) {
+                        mergedComplaintsMap.set(item.id, {
+                            ...existing,
+                            ...item,
+                            reporter: item.reporter || existing.reporter || 'Warga Sekolah',
+                            role: item.role || existing.role || 'Siswa',
+                            contact: item.contact !== undefined ? item.contact : (existing.contact || ''),
+                            location: item.location || existing.location || '-',
+                            category: item.category || existing.category || 'Lainnya',
+                            desc: item.desc || existing.desc || '-',
+                            status: item.status || existing.status || 'Pending',
+                            response: item.response !== undefined ? item.response : (existing.response || '')
+                        });
+                    } else {
+                        mergedComplaintsMap.set(item.id, item);
+                    }
+                }
             });
             complaints = Array.from(mergedComplaintsMap.values());
             complaints.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -571,9 +590,11 @@ async function saveToDatabase(collectionName, docId, data, isUpdate = false) {
         }
     }
 
-    // 2. Sinkronisasikan ke GAS jika URL sudah dikonfigurasi
+    // 2. Sinkronisasikan ke GAS jika URL sudah dikonfigurasi (Latar belakang non-blocking)
     if (gasConfig && gasConfig.isConfigured()) {
-        await saveToGAS(collectionName, docId, data, isUpdate);
+        saveToGAS(collectionName, docId, data, isUpdate).catch(err => {
+            console.warn(`Sinkronisasi latar belakang ke GAS gagal untuk ${collectionName}:`, err);
+        });
     }
 }
 
@@ -1173,6 +1194,19 @@ function renderFacilities() {
         });
     }
 
+    const complaintLocationSelect = document.getElementById('complaintLocation');
+    if (complaintLocationSelect) {
+        const currentVal = complaintLocationSelect.value;
+        complaintLocationSelect.innerHTML = '<option value="">-- Pilih Lokasi Fasilitas / Ruangan --</option>';
+        sortedFacilities.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f;
+            opt.textContent = f;
+            complaintLocationSelect.appendChild(opt);
+        });
+        if (currentVal) complaintLocationSelect.value = currentVal;
+    }
+
     renderFacilityAdminList();
 }
 
@@ -1560,7 +1594,7 @@ function renderComplaints(filterText = "", statusFilter = currentComplaintStatus
 
     filtered.forEach(c => {
         let badgeClass = 'badge-pending';
-        let badgeText = '⏳ Pending (Diterima)';
+        let badgeText = '🔴 Pending (Belum Diperbaiki)';
 
         if (c.status === 'Dalam Perbaikan') {
             badgeClass = 'badge-in-progress';
@@ -1579,17 +1613,28 @@ function renderComplaints(filterText = "", statusFilter = currentComplaintStatus
         card.innerHTML = `
             <div class="complaint-header">
                 <div>
-                    <div class="complaint-location">📍 ${c.location}</div>
+                    <div class="complaint-location">📍 ${c.location || 'Lokasi tidak ditentukan'}</div>
                     <span class="complaint-category">${c.category || 'Lainnya'}</span>
                 </div>
                 <span class="complaint-badge ${badgeClass}">${badgeText}</span>
             </div>
 
-            <div class="complaint-reporter">
-                <i class="fas fa-user-circle"></i> Pelapor: <strong>${c.reporter || 'Warga Sekolah'}</strong> (${c.role || 'Siswa'}) • 🕒 ${dateStr}
+            <div class="complaint-meta">
+                <div class="complaint-reporter">
+                    <i class="fas fa-user-circle"></i> Pelapor: <strong>${c.reporter || 'Warga Sekolah'}</strong> (${c.role || 'Siswa'})
+                </div>
+                <div class="complaint-time">
+                    <i class="far fa-clock"></i> Waktu: <strong>${dateStr}</strong>
+                </div>
             </div>
 
-            <div class="complaint-desc">${c.desc}</div>
+            <div class="complaint-desc">${c.desc || 'Tidak ada deskripsi rincian.'}</div>
+
+            ${(c.imageUrl || c.image) ? `
+                <div class="complaint-photo-wrap" style="margin-top: 6px;">
+                    <img src="${c.imageUrl || c.image}" alt="Dokumentasi Pengaduan" style="width: 100%; max-height: 220px; object-fit: cover; border-radius: 10px; border: 1px solid rgba(0,0,0,0.08); cursor: pointer;" title="Klik untuk memperbesar gambar" onclick="window.open(this.src, '_blank')">
+                </div>
+            ` : ''}
 
             ${(c.status || 'Pending') === 'Pending' ? `
                 <div style="margin-top: 10px; text-align: right;">
@@ -1639,6 +1684,92 @@ function renderComplaints(filterText = "", statusFilter = currentComplaintStatus
             }
         });
     });
+
+    renderComplaintsMap();
+}
+
+function renderComplaintsMap() {
+    const wrapper = document.getElementById('complaintsMapWrapper');
+    if (!wrapper) return;
+
+    // Hapus overlay lama
+    wrapper.querySelectorAll('.complaint-map-box').forEach(box => box.remove());
+
+    // Grouping status pengaduan berdasarkan lokasi ter-normalisasi
+    const statusByLocation = {};
+    complaints.forEach(c => {
+        if (!c.location) return;
+        const normLoc = normalizeFacilityName(c.location);
+        if (!statusByLocation[normLoc]) {
+            statusByLocation[normLoc] = { pending: 0, inProgress: 0, completed: 0 };
+        }
+        const status = c.status || 'Pending';
+        if (status === 'Pending') {
+            statusByLocation[normLoc].pending++;
+        } else if (status === 'Dalam Perbaikan') {
+            statusByLocation[normLoc].inProgress++;
+        } else {
+            statusByLocation[normLoc].completed++;
+        }
+    });
+
+    // Iterasi semua fasilitas terpetakan dari mapCoordinates
+    const keys = Object.keys(mapCoordinates);
+
+    keys.forEach(normKey => {
+        const coords = mapCoordinates[normKey];
+        if (!coords || !coords.top || !coords.left) return;
+
+        const originalFacilityName = facilities.find(f => normalizeFacilityName(f) === normKey) || normKey;
+        const locData = statusByLocation[normKey];
+
+        let statusClass = 'status-green'; // Default awal: Hijau (Aman)
+        let statusBadge = '🟢';
+        let tooltipText = `📍 ${originalFacilityName}\nKondisi: 🟢 Aman / Tidak Ada Pengaduan Aktif`;
+
+        if (locData) {
+            if (locData.pending > 0) {
+                statusClass = 'status-red'; // Pending: Merah
+                statusBadge = '🔴';
+                tooltipText = `📍 ${originalFacilityName}\nStatus: 🔴 Pending (${locData.pending} Laporan Masuk)`;
+                if (locData.inProgress > 0) tooltipText += `\n🔵 Dalam Perbaikan (${locData.inProgress} Laporan)`;
+            } else if (locData.inProgress > 0) {
+                statusClass = 'status-blue'; // Dalam Perbaikan: Biru
+                statusBadge = '🔵';
+                tooltipText = `📍 ${originalFacilityName}\nStatus: 🔵 Dalam Perbaikan (${locData.inProgress} Laporan)`;
+            } else if (locData.completed > 0) {
+                statusClass = 'status-green'; // Selesai: Hijau
+                statusBadge = '🟢';
+                tooltipText = `📍 ${originalFacilityName}\nStatus: 🟢 Selesai Dikerjakan (${locData.completed} Laporan)`;
+            }
+        }
+
+        const box = document.createElement('div');
+        box.className = `complaint-map-box ${statusClass}`;
+        box.style.top = coords.top;
+        box.style.left = coords.left;
+        box.style.width = coords.width;
+        box.style.height = coords.height;
+        box.title = tooltipText;
+
+        box.innerHTML = '';
+
+        box.addEventListener('click', () => {
+            if (DOM.complaintSearchInput) {
+                DOM.complaintSearchInput.value = originalFacilityName;
+            }
+            currentComplaintStatusFilter = 'all';
+            document.querySelectorAll('.filter-pills .pill-btn').forEach(p => {
+                if (p.getAttribute('data-filter') === 'all') p.classList.add('active');
+                else p.classList.remove('active');
+            });
+            renderComplaints(originalFacilityName);
+            const grid = document.getElementById('complaintsGrid');
+            if (grid) grid.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        wrapper.appendChild(box);
+    });
 }
 
 function openPublicComplaintEdit(comp) {
@@ -1652,6 +1783,18 @@ function openPublicComplaintEdit(comp) {
     document.getElementById('complaintLocation').value = comp.location || '';
     document.getElementById('complaintCategory').value = comp.category || 'Lainnya';
     document.getElementById('complaintDesc').value = comp.desc || '';
+    
+    const imgUrl = comp.imageUrl || comp.image || '';
+    const urlInput = document.getElementById('complaintImageUrl');
+    const prevContainer = document.getElementById('complaintImagePreview');
+    const prevImg = document.getElementById('complaintPreviewImg');
+    if (urlInput) urlInput.value = imgUrl;
+    if (imgUrl && prevImg && prevContainer) {
+        prevImg.src = imgUrl;
+        prevContainer.classList.remove('hidden');
+    } else if (prevContainer) {
+        prevContainer.classList.add('hidden');
+    }
     DOM.complaintModal.classList.remove('hidden');
 }
 
@@ -2329,6 +2472,16 @@ function setupEventListeners() {
             if (formIdInput) formIdInput.value = '';
             const titleEl = document.getElementById('complaintModalTitle');
             if (titleEl) titleEl.textContent = '📢 Buat Laporan Pengaduan / Aspirasi Sarpras';
+            
+            const imgInput = document.getElementById('complaintImageInput');
+            const urlInput = document.getElementById('complaintImageUrl');
+            const prevContainer = document.getElementById('complaintImagePreview');
+            const prevImg = document.getElementById('complaintPreviewImg');
+            if (imgInput) imgInput.value = '';
+            if (urlInput) urlInput.value = '';
+            if (prevImg) prevImg.src = '';
+            if (prevContainer) prevContainer.classList.add('hidden');
+
             DOM.complaintModal.classList.remove('hidden');
         });
     }
@@ -2343,30 +2496,95 @@ function setupEventListeners() {
         });
     }
 
+function setupImageUploadHandler() {
+    const fileInput = document.getElementById('complaintImageInput');
+    const urlInput = document.getElementById('complaintImageUrl');
+    const previewContainer = document.getElementById('complaintImagePreview');
+    const previewImg = document.getElementById('complaintPreviewImg');
+    const removeBtn = document.getElementById('removeComplaintImgBtn');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_SIZE = 500;
+
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                    if (urlInput) urlInput.value = compressedBase64;
+                    if (previewImg) previewImg.src = compressedBase64;
+                    if (previewContainer) previewContainer.classList.remove('hidden');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', () => {
+            if (fileInput) fileInput.value = '';
+            if (urlInput) urlInput.value = '';
+            if (previewImg) previewImg.src = '';
+            if (previewContainer) previewContainer.classList.add('hidden');
+        });
+    }
+}
+
+    setupImageUploadHandler();
+
     if (DOM.complaintForm) {
         DOM.complaintForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const pwdInput = document.getElementById('complaintPassword');
             const pwd = pwdInput ? pwdInput.value.trim() : '';
-            if (pwd !== 'sarpras_dua' && pwd !== 'Andalusia_2' && pwd !== 'smandacis') {
+            const pwdLower = pwd.toLowerCase();
+            if (pwdLower !== 'sarpras_dua' && pwd !== 'Andalusia_2' && pwdLower !== 'smandacis') {
                 alert("Password verifikasi salah! Silakan periksa kembali password yang Anda masukkan.");
                 return;
             }
 
-            const compData = {
-                reporter: document.getElementById('complaintReporter').value,
-                role: document.getElementById('complaintRole').value,
-                contact: document.getElementById('complaintContact').value || '',
-                location: document.getElementById('complaintLocation').value,
-                category: document.getElementById('complaintCategory').value,
-                desc: document.getElementById('complaintDesc').value,
-                status: 'Pending',
-                createdAt: new Date().toISOString(),
-                response: ''
-            };
-
             const editId = document.getElementById('complaintFormId') ? document.getElementById('complaintFormId').value : '';
+            const existingComp = editId ? (complaints.find(c => c.id === editId) || {}) : {};
+
+            const compData = {
+                ...existingComp,
+                reporter: document.getElementById('complaintReporter').value || 'Warga Sekolah',
+                role: document.getElementById('complaintRole').value || 'Siswa',
+                contact: document.getElementById('complaintContact').value || '',
+                location: document.getElementById('complaintLocation').value || '-',
+                category: document.getElementById('complaintCategory').value || 'Lainnya',
+                desc: document.getElementById('complaintDesc').value || '-',
+                imageUrl: document.getElementById('complaintImageUrl') ? document.getElementById('complaintImageUrl').value : '',
+                status: existingComp.status || 'Pending',
+                createdAt: existingComp.createdAt || new Date().toISOString(),
+                response: existingComp.response || ''
+            };
 
             const btn = document.getElementById('saveComplaintBtn');
             btn.disabled = true;
@@ -2374,23 +2592,46 @@ function setupEventListeners() {
 
             try {
                 if (editId) {
-                    const updatedData = {
-                        reporter: compData.reporter,
-                        role: compData.role,
-                        contact: compData.contact,
-                        location: compData.location,
-                        category: compData.category,
-                        desc: compData.desc
-                    };
-                    await saveToDatabase('complaints', editId, updatedData, true);
+                    await saveToDatabase('complaints', editId, compData, true);
                     alert("Laporan pengaduan Anda berhasil diperbarui!");
                 } else {
                     await saveToDatabase('complaints', null, compData, false);
                     alert("Laporan pengaduan Anda berhasil dikirim! Tim Sarpras akan segera memverifikasi dan menindaklanjuti laporan Anda.");
                 }
+
+                // Reset Form & Input Foto
                 DOM.complaintForm.reset();
                 if (document.getElementById('complaintFormId')) document.getElementById('complaintFormId').value = '';
+                const imgInput = document.getElementById('complaintImageInput');
+                const urlInput = document.getElementById('complaintImageUrl');
+                const prevContainer = document.getElementById('complaintImagePreview');
+                const prevImg = document.getElementById('complaintPreviewImg');
+                if (imgInput) imgInput.value = '';
+                if (urlInput) urlInput.value = '';
+                if (prevImg) prevImg.src = '';
+                if (prevContainer) prevContainer.classList.add('hidden');
+                
+                // Tutup Modal
                 DOM.complaintModal.classList.add('hidden');
+
+                // Otomatis Pindah ke Tab Pengaduan Warga Sekolah agar Papan Pemantauan Pengaduan Langsung Terbuka!
+                if (DOM.tabComplaintsBtn) {
+                    DOM.tabComplaintsBtn.click();
+                }
+
+                // Reset filter agar laporan baru di paling atas langsung terlihat
+                currentComplaintStatusFilter = 'all';
+                document.querySelectorAll('.filter-pills .pill-btn').forEach(p => {
+                    if (p.getAttribute('data-filter') === 'all') p.classList.add('active');
+                    else p.classList.remove('active');
+                });
+                if (DOM.complaintSearchInput) DOM.complaintSearchInput.value = '';
+
+                // Render ulang pengaduan & scroll ke papan pemantauan
+                renderComplaints();
+                if (DOM.complaintsSection) {
+                    DOM.complaintsSection.scrollIntoView({ behavior: 'smooth' });
+                }
             } catch (err) {
                 console.error(err);
                 alert("Gagal menyimpan laporan pengaduan.");
@@ -2416,7 +2657,9 @@ function setupEventListeners() {
         DOM.complaintAdminForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('complaintAdminId').value;
+            const existingComp = complaints.find(c => c.id === id) || {};
             const updatedData = {
+                ...existingComp,
                 status: document.getElementById('complaintAdminStatus').value,
                 response: document.getElementById('complaintAdminResponse').value
             };
