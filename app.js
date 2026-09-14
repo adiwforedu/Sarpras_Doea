@@ -970,7 +970,7 @@ async function handlePublicMultiOutSubmit(e) {
     const pwdInput = document.getElementById('multiOutPassword');
     const pwd = pwdInput ? pwdInput.value.trim() : '';
 
-    if (pwd !== 'sarpras_dua' && pwd !== 'Andalusia_2') {
+    if (pwd !== 'sarpras_dua' && pwd !== 'Afriadi1984') {
         alert('Password verifikasi salah! Silakan periksa kembali password yang Anda masukkan.');
         return;
     }
@@ -2897,7 +2897,7 @@ function setupImageUploadHandler() {
     const handleLoginSubmit = (e) => {
         if (e) e.preventDefault();
         const pwd = DOM.adminPassword ? DOM.adminPassword.value.trim() : '';
-        if (pwd === 'Andalusia_2') {
+        if (pwd === 'Afriadi1984') {
             isAdmin = true;
             isOperator = true;
             updateAccessControlUI();
