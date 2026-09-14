@@ -2564,7 +2564,7 @@ function setupImageUploadHandler() {
             const pwdInput = document.getElementById('complaintPassword');
             const pwd = pwdInput ? pwdInput.value.trim() : '';
             const pwdLower = pwd.toLowerCase();
-            if (pwdLower !== 'sarpras_dua' && pwd !== 'Andalusia_2' && pwdLower !== 'smandacis') {
+            if (pwdLower !== 'sarpras_dua' && pwd !== 'Andalusia2' && pwdLower !== 'smandacis') {
                 alert("Password verifikasi salah! Silakan periksa kembali password yang Anda masukkan.");
                 return;
             }
